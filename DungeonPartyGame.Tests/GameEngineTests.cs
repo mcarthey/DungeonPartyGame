@@ -68,8 +68,8 @@ public class GameEngineTests
     private static Character CreateTestCharacter(string name)
     {
         var stats = new Stats(10, 10, 10, 100);
-        var equipment = new Equipment(new Weapon("Sword", 5, 10));
-        var skills = new List<Skill> { new Skill("Attack", "Basic attack", 1.0, 0) };
-        return new Character(name, stats, equipment, skills);
+        var equipment = new Equipment(new Weapon("Sword", 5, 10, "Strength"));
+        var skills = new List<Skill> { new Skill("Attack", "Basic attack", TargetingRule.SingleEnemy, 1.0, 0) };
+        return new Character(name, Role.Tank, stats, equipment, skills);
     }
 }

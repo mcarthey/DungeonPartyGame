@@ -2,44 +2,71 @@ namespace DungeonPartyGame.Core.Models;
 
 public class CombatSession
 {
-    public Character FighterA { get; }
-    public Character FighterB { get; }
-    public Character CurrentAttacker { get; private set; }
-    public Character CurrentDefender { get; private set; }
+    public Party PartyA { get; }
+    public Party PartyB { get; }
+    public Queue<TurnOrderEntry> TurnQueue { get; private set; } = new();
     public int RoundNumber { get; private set; } = 1;
     public bool IsComplete { get; private set; }
-    public Character? Winner { get; private set; }
+    public Party? WinningParty { get; private set; }
 
-    public CombatSession(Character a, Character b)
+    public CombatSession(Party partyA, Party partyB)
     {
-        FighterA = a;
-        FighterB = b;
+        PartyA = partyA;
+        PartyB = partyB;
+        GenerateTurnOrder();
+    }
 
-        // Initiative: higher DEX goes first
-        if (b.Stats.Dexterity > a.Stats.Dexterity)
+    private void GenerateTurnOrder()
+    {
+        var allCharacters = PartyA.AliveMembers.Concat(PartyB.AliveMembers)
+            .OrderByDescending(c => c.Stats.Dexterity)
+            .ToList();
+
+        TurnQueue.Clear();
+        foreach (var character in allCharacters)
         {
-            CurrentAttacker = b;
-            CurrentDefender = a;
+            var owningParty = PartyA.Members.Contains(character) ? PartyA : PartyB;
+            TurnQueue.Enqueue(new TurnOrderEntry(character, owningParty));
         }
-        else
-        {
-            CurrentAttacker = a;
-            CurrentDefender = b;
-        }
+    }
+
+    public TurnOrderEntry? GetCurrentTurn()
+    {
+        return TurnQueue.Count > 0 ? TurnQueue.Peek() : null;
     }
 
     public void AdvanceTurn()
     {
         if (IsComplete) return;
 
-        // Swap attacker and defender
-        (CurrentAttacker, CurrentDefender) = (CurrentDefender, CurrentAttacker);
-        RoundNumber++;
+        if (TurnQueue.Count > 0)
+        {
+            TurnQueue.Dequeue();
+        }
+
+        // If turn queue is empty, start new round
+        if (TurnQueue.Count == 0)
+        {
+            RoundNumber++;
+            GenerateTurnOrder();
+        }
+
+        // Check victory conditions
+        if (PartyA.IsDefeated)
+        {
+            IsComplete = true;
+            WinningParty = PartyB;
+        }
+        else if (PartyB.IsDefeated)
+        {
+            IsComplete = true;
+            WinningParty = PartyA;
+        }
     }
 
-    public void CompleteCombat(Character winner)
+    public void CompleteCombat(Party winner)
     {
         IsComplete = true;
-        Winner = winner;
+        WinningParty = winner;
     }
 }

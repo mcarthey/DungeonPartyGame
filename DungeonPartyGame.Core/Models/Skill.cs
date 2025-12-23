@@ -4,14 +4,16 @@ public class Skill
 {
     public string Name { get; }
     public string Description { get; }
+    public TargetingRule Targeting { get; }
     public double DamageMultiplier { get; }
     public int Cooldown { get; }
     private int _lastUsedRound = -1000;
 
-    public Skill(string name, string description, double damageMultiplier, int cooldown)
+    public Skill(string name, string description, TargetingRule targeting, double damageMultiplier, int cooldown)
     {
         Name = name;
         Description = description;
+        Targeting = targeting;
         DamageMultiplier = damageMultiplier;
         Cooldown = cooldown;
     }

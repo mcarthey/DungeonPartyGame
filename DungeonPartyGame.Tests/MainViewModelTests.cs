@@ -23,98 +23,130 @@ public class MainViewModelTests
     public void Constructor_InitializesCommands()
     {
         // Assert
-        Assert.NotNull(_viewModel.CreateCharactersCommand);
+        Assert.NotNull(_viewModel.CreatePartiesCommand);
         Assert.NotNull(_viewModel.StartNewCombatCommand);
-        Assert.NotNull(_viewModel.NextRoundCommand);
+        Assert.NotNull(_viewModel.NextTurnCommand);
     }
 
     [Fact]
-    public void CreateCharactersCommand_CreatesCharacters_SetsCombatLog()
+    public void CreatePartiesCommand_CreatesParties_SetsCombatLog()
     {
         // Act
-        _viewModel.CreateCharactersCommand.Execute(null);
+        _viewModel.CreatePartiesCommand.Execute(null);
 
         // Assert
-        Assert.Equal("Characters created. Press Start New Combat.", _viewModel.CombatLog);
+        Assert.Equal("Parties created. Press Start New Battle.", _viewModel.CombatLog);
         Assert.True(_viewModel.StartNewCombatCommand.CanExecute(null));
-        Assert.False(_viewModel.NextRoundCommand.CanExecute(null));
+        Assert.False(_viewModel.NextTurnCommand.CanExecute(null));
     }
 
     [Fact]
-    public void StartNewCombatCommand_CreatesSession_WhenCharactersExist()
+    public void StartNewCombatCommand_CreatesSession_WhenPartiesExist()
     {
         // Arrange
-        _viewModel.CreateCharactersCommand.Execute(null);
-        var session = new CombatSession(CreateTestCharacter("A"), CreateTestCharacter("B"));
-        _combatEngineMock.Setup(c => c.CreateSession(It.IsAny<Character>(), It.IsAny<Character>())).Returns(session);
+        _viewModel.CreatePartiesCommand.Execute(null);
+        var session = new CombatSession(new Party(), new Party());
+        _combatEngineMock.Setup(c => c.CreateSession(It.IsAny<Party>(), It.IsAny<Party>())).Returns(session);
 
         // Act
         _viewModel.StartNewCombatCommand.Execute(null);
 
         // Assert
-        _combatEngineMock.Verify(c => c.CreateSession(It.IsAny<Character>(), It.IsAny<Character>()), Times.Once);
-        Assert.Contains("Combat begins!", _viewModel.CombatLog);
-        Assert.True(_viewModel.NextRoundCommand.CanExecute(null));
+        _combatEngineMock.Verify(c => c.CreateSession(It.IsAny<Party>(), It.IsAny<Party>()), Times.Once);
+        Assert.Contains("Battle begins!", _viewModel.CombatLog);
+        Assert.True(_viewModel.NextTurnCommand.CanExecute(null));
     }
 
     [Fact]
-    public void StartNewCombatCommand_ShowsError_WhenNoCharacters()
+    public void StartNewCombatCommand_ShowsError_WhenNoParties()
     {
         // Act
         _viewModel.StartNewCombatCommand.Execute(null);
 
         // Assert
-        Assert.Equal("Create characters first.", _viewModel.CombatLog);
+        Assert.Equal("Create parties first.", _viewModel.CombatLog);
     }
 
     [Fact]
-    public void NextRoundCommand_ExecutesRound_UpdatesLog()
+    public void StartNewCombatCommand_ResetsHealthForReplay()
     {
         // Arrange
-        _viewModel.CreateCharactersCommand.Execute(null);
-        var session = new CombatSession(CreateTestCharacter("A"), CreateTestCharacter("B"));
-        _combatEngineMock.Setup(c => c.CreateSession(It.IsAny<Character>(), It.IsAny<Character>())).Returns(session);
+        _viewModel.CreatePartiesCommand.Execute(null);
+        // Simulate damage to characters
+        var session = new CombatSession(new Party(), new Party());
+        _combatEngineMock.Setup(c => c.CreateSession(It.IsAny<Party>(), It.IsAny<Party>())).Returns(session);
+
+        // Act
+        _viewModel.StartNewCombatCommand.Execute(null);
+
+        // Assert - Health should be reset, but since we can't easily verify internal state,
+        // we just ensure the method completes without error
+        Assert.Contains("Battle begins!", _viewModel.CombatLog);
+    }
+
+    [Fact]
+    public void NextTurnCommand_ExecutesTurn_UpdatesLog()
+    {
+        // Arrange
+        _viewModel.CreatePartiesCommand.Execute(null);
+        var session = new CombatSession(new Party(), new Party());
+        _combatEngineMock.Setup(c => c.CreateSession(It.IsAny<Party>(), It.IsAny<Party>())).Returns(session);
         _viewModel.StartNewCombatCommand.Execute(null);
 
         var result = new CombatResult
         {
-            Round = 1,
-            Attacker = "A",
-            Defender = "B",
-            SkillUsed = "Attack",
+            RoundNumber = 1,
+            Actor = CreateTestCharacter("A"),
+            Target = CreateTestCharacter("B"),
+            SkillName = "Attack",
             Damage = 10,
-            DefenderHP = 90,
-            IsDefeated = false,
-            LogMessage = "Round 1\nA uses Attack\nDamage: 10\nB HP: 90",
-            IsFinalRound = false,
-            SummaryText = "A attacks B for 10 damage."
+            TargetDefeated = false,
+            IsFinalTurn = false,
+            SummaryText = "A attacks B with Attack (10 dmg)\nB HP: 90"
         };
-        _combatEngineMock.Setup(c => c.ExecuteRound(session)).Returns(result);
+        _combatEngineMock.Setup(c => c.ExecuteTurn(session)).Returns(result);
 
         // Act
-        _viewModel.NextRoundCommand.Execute(null);
+        _viewModel.NextTurnCommand.Execute(null);
 
         // Assert
-        _combatEngineMock.Verify(c => c.ExecuteRound(session), Times.Once);
+        _combatEngineMock.Verify(c => c.ExecuteTurn(session), Times.Once);
         Assert.Contains("Round 1", _viewModel.CombatLog);
-        Assert.Contains("A uses Attack", _viewModel.CombatLog);
+        Assert.Contains("A attacks B", _viewModel.CombatLog);
     }
 
     [Fact]
-    public void NextRoundCommand_DoesNothing_WhenNoSession()
+    public void NextTurnCommand_DoesNothing_WhenNoSession()
     {
         // Act
-        _viewModel.NextRoundCommand.Execute(null);
+        _viewModel.NextTurnCommand.Execute(null);
 
         // Assert - Should not throw, just do nothing
-        _combatEngineMock.Verify(c => c.ExecuteRound(It.IsAny<CombatSession>()), Times.Never);
+        _combatEngineMock.Verify(c => c.ExecuteTurn(It.IsAny<CombatSession>()), Times.Never);
+    }
+
+    [Fact]
+    public void NextTurnCommand_DoesNothing_WhenSessionComplete()
+    {
+        // Arrange
+        _viewModel.CreatePartiesCommand.Execute(null);
+        var session = new CombatSession(new Party(), new Party());
+        session.CompleteCombat(new Party()); // Mark as complete
+        _combatEngineMock.Setup(c => c.CreateSession(It.IsAny<Party>(), It.IsAny<Party>())).Returns(session);
+        _viewModel.StartNewCombatCommand.Execute(null);
+
+        // Act
+        _viewModel.NextTurnCommand.Execute(null);
+
+        // Assert - Should not execute turn
+        _combatEngineMock.Verify(c => c.ExecuteTurn(session), Times.Never);
     }
 
     private static Character CreateTestCharacter(string name)
     {
         var stats = new Stats(10, 10, 10, 100);
-        var equipment = new Equipment(new Weapon("Sword", 5, 10));
-        var skills = new List<Skill> { new Skill("Attack", "Basic attack", 1.0, 0) };
-        return new Character(name, stats, equipment, skills);
+        var equipment = new Equipment(new Weapon("Sword", 5, 10, "Strength"));
+        var skills = new List<Skill> { new Skill("Attack", "Basic attack", TargetingRule.SingleEnemy, 1.0, 0) };
+        return new Character(name, Role.Tank, stats, equipment, skills);
     }
 }

@@ -47,11 +47,65 @@ public class PartyTests
         Assert.IsAssignableFrom<IReadOnlyList<Character>>(party.Members);
     }
 
+    [Fact]
+    public void AliveMembers_ReturnsOnlyLivingCharacters()
+    {
+        // Arrange
+        var party = new Party();
+        var aliveChar = CreateTestCharacter("Alive");
+        var deadChar = CreateTestCharacter("Dead");
+        deadChar.ApplyDamage(1000); // Kill the character
+        party.Add(aliveChar);
+        party.Add(deadChar);
+
+        // Act
+        var aliveMembers = party.AliveMembers;
+
+        // Assert
+        Assert.Single(aliveMembers);
+        Assert.Equal(aliveChar, aliveMembers[0]);
+    }
+
+    [Fact]
+    public void IsDefeated_ReturnsFalse_WhenPartyHasAliveMembers()
+    {
+        // Arrange
+        var party = new Party();
+        var character = CreateTestCharacter("Alive");
+        party.Add(character);
+
+        // Act & Assert
+        Assert.False(party.IsDefeated);
+    }
+
+    [Fact]
+    public void IsDefeated_ReturnsTrue_WhenPartyHasNoAliveMembers()
+    {
+        // Arrange
+        var party = new Party();
+        var character = CreateTestCharacter("Dead");
+        character.ApplyDamage(1000); // Kill the character
+        party.Add(character);
+
+        // Act & Assert
+        Assert.True(party.IsDefeated);
+    }
+
+    [Fact]
+    public void IsDefeated_ReturnsTrue_WhenPartyIsEmpty()
+    {
+        // Arrange
+        var party = new Party();
+
+        // Act & Assert
+        Assert.True(party.IsDefeated);
+    }
+
     private static Character CreateTestCharacter(string name)
     {
         var stats = new Stats(10, 10, 10, 100);
-        var equipment = new Equipment(new Weapon("Sword", 5, 10));
-        var skills = new List<Skill> { new Skill("Attack", "Basic attack", 1.0, 0) };
-        return new Character(name, stats, equipment, skills);
+        var equipment = new Equipment(new Weapon("Sword", 5, 10, "Strength"));
+        var skills = new List<Skill> { new Skill("Attack", "Basic attack", TargetingRule.SingleEnemy, 1.0, 0) };
+        return new Character(name, Role.Tank, stats, equipment, skills);
     }
 }

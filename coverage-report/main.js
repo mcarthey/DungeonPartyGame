@@ -213,23 +213,24 @@ var assemblies = [
   {
     "name": "DungeonPartyGame.Core",
     "classes": [
-      { "name": "DungeonPartyGame.Core.Models.Character", "rp": "DungeonPartyGame.Core_Character.html", "cl": 27, "ucl": 4, "cal": 31, "tl": 46, "cb": 2, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "DungeonPartyGame.Core.Models.CombatResult", "rp": "DungeonPartyGame.Core_CombatResult.html", "cl": 10, "ucl": 0, "cal": 10, "tl": 15, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "DungeonPartyGame.Core.Models.CombatSession", "rp": "DungeonPartyGame.Core_CombatSession.html", "cl": 30, "ucl": 0, "cal": 30, "tl": 45, "cb": 4, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "DungeonPartyGame.Core.Models.Character", "rp": "DungeonPartyGame.Core_Character.html", "cl": 39, "ucl": 4, "cal": 43, "tl": 52, "cb": 4, "tb": 8, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "DungeonPartyGame.Core.Models.CombatResult", "rp": "DungeonPartyGame.Core_CombatResult.html", "cl": 10, "ucl": 0, "cal": 10, "tl": 13, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "DungeonPartyGame.Core.Models.CombatSession", "rp": "DungeonPartyGame.Core_CombatSession.html", "cl": 59, "ucl": 0, "cal": 59, "tl": 72, "cb": 20, "tb": 20, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "DungeonPartyGame.Core.Models.Equipment", "rp": "DungeonPartyGame.Core_Equipment.html", "cl": 5, "ucl": 0, "cal": 5, "tl": 11, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "DungeonPartyGame.Core.Models.GameState", "rp": "DungeonPartyGame.Core_GameState.html", "cl": 14, "ucl": 0, "cal": 14, "tl": 24, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "DungeonPartyGame.Core.Models.Party", "rp": "DungeonPartyGame.Core_Party.html", "cl": 7, "ucl": 0, "cal": 7, "tl": 15, "cb": 2, "tb": 2, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "DungeonPartyGame.Core.Models.Skill", "rp": "DungeonPartyGame.Core_Skill.html", "cl": 14, "ucl": 0, "cal": 14, "tl": 21, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "DungeonPartyGame.Core.Models.Party", "rp": "DungeonPartyGame.Core_Party.html", "cl": 11, "ucl": 0, "cal": 11, "tl": 19, "cb": 4, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "DungeonPartyGame.Core.Models.Skill", "rp": "DungeonPartyGame.Core_Skill.html", "cl": 18, "ucl": 0, "cal": 18, "tl": 23, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "DungeonPartyGame.Core.Models.Stats", "rp": "DungeonPartyGame.Core_Stats.html", "cl": 14, "ucl": 0, "cal": 14, "tl": 21, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "DungeonPartyGame.Core.Models.TurnOrderEntry", "rp": "DungeonPartyGame.Core_TurnOrderEntry.html", "cl": 7, "ucl": 0, "cal": 7, "tl": 13, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "DungeonPartyGame.Core.Models.Weapon", "rp": "DungeonPartyGame.Core_Weapon.html", "cl": 11, "ucl": 0, "cal": 11, "tl": 17, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "DungeonPartyGame.Core.Services.CombatEngine", "rp": "DungeonPartyGame.Core_CombatEngine.html", "cl": 47, "ucl": 0, "cal": 47, "tl": 67, "cb": 6, "tb": 6, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "DungeonPartyGame.Core.Services.CombatEngine", "rp": "DungeonPartyGame.Core_CombatEngine.html", "cl": 62, "ucl": 0, "cal": 62, "tl": 82, "cb": 18, "tb": 20, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "DungeonPartyGame.Core.Services.DiceService", "rp": "DungeonPartyGame.Core_DiceService.html", "cl": 5, "ucl": 0, "cal": 5, "tl": 11, "cb": 2, "tb": 2, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "DungeonPartyGame.Core.Services.GameEngine", "rp": "DungeonPartyGame.Core_GameEngine.html", "cl": 17, "ucl": 0, "cal": 17, "tl": 33, "cb": 4, "tb": 4, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
   {
     "name": "DungeonPartyGame.UI",
     "classes": [
-      { "name": "DungeonPartyGame.UI.ViewModels.MainViewModel", "rp": "DungeonPartyGame.UI_MainViewModel.html", "cl": 64, "ucl": 4, "cal": 68, "tl": 106, "cb": 12, "tb": 14, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "DungeonPartyGame.UI.ViewModels.MainViewModel", "rp": "DungeonPartyGame.UI_MainViewModel.html", "cl": 99, "ucl": 4, "cal": 103, "tl": 138, "cb": 23, "tb": 28, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "Microsoft.Maui.Controls.Generated.GeneratedBindingInterceptors", "rp": "DungeonPartyGame.UI_GeneratedBindingInterceptors.html", "cl": 0, "ucl": 8, "cal": 8, "tl": 29, "cb": 0, "tb": 12, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
 ];
@@ -249,6 +250,12 @@ var riskHotspots = [
     "metrics": [
       { "value": 72, "exceeded": true },
       { "value": 8, "exceeded": false },
+    ]},
+  {
+    "assembly": "DungeonPartyGame.Core", "class": "DungeonPartyGame.Core.Services.CombatEngine", "reportPath": "DungeonPartyGame.Core_CombatEngine.html", "methodName": "ExecuteTurn(DungeonPartyGame.Core.Models.CombatSession)", "methodShortName": "ExecuteTurn(...)", "fileIndex": 0, "line": 19,
+    "metrics": [
+      { "value": 16, "exceeded": false },
+      { "value": 16, "exceeded": true },
     ]},
 ];
 

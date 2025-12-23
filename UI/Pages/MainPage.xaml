@@ -5,12 +5,12 @@
     x:Class="DungeonPartyGame.UI.Pages.MainPage">
 
     <VerticalStackLayout Padding="20" Spacing="16">
-        <Button Text="Create Characters"
-                Command="{Binding CreateCharactersCommand}" />
-        <Button Text="Start New Combat"
+        <Button Text="Create Parties"
+                Command="{Binding CreatePartiesCommand}" />
+        <Button Text="Start New Battle"
                 Command="{Binding StartNewCombatCommand}" />
-        <Button Text="Next Round"
-                Command="{Binding NextRoundCommand}" />
+        <Button Text="Next Turn"
+                Command="{Binding NextTurnCommand}" />
         <ScrollView HeightRequest="400">
             <Label Text="{Binding CombatLog}"
                    FontFamily="Courier New"
