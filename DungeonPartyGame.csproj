@@ -18,6 +18,9 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
+		<!-- Disable automatic assembly info generation to avoid duplicates -->
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
 		<!-- Display name -->
 		<ApplicationTitle>DungeonPartyGame</ApplicationTitle>
 
@@ -64,6 +67,11 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+	</ItemGroup>
+
+	<!-- Exclude auto-generated AssemblyAttributes.cs files to prevent duplicate assembly attributes -->
+	<ItemGroup>
+		<Compile Remove="**\*.AssemblyAttributes.cs" />
 	</ItemGroup>
 
 </Project>
