@@ -10,4 +10,8 @@ public class CombatResult
     public bool TargetDefeated { get; set; }
     public bool IsFinalTurn { get; set; }
     public string SummaryText { get; set; } = string.Empty;
+    
+    // Aliases for compatibility with ViewModels
+    public string LogMessage => SummaryText;
+    public bool IsFinalRound => IsFinalTurn;
 }

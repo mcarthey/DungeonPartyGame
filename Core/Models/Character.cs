@@ -1,23 +1,5 @@
 namespace DungeonPartyGame.Core.Models;
 
-public class EffectiveStats
-{
-    public int Attack { get; }
-    public int Defense { get; }
-    public int MaxHealth { get; }
-    public int Crit { get; }
-    public int Dodge { get; }
-
-    public EffectiveStats(int attack, int defense, int maxHealth, int crit, int dodge)
-    {
-        Attack = attack;
-        Defense = defense;
-        MaxHealth = maxHealth;
-        Crit = crit;
-        Dodge = dodge;
-    }
-}
-
 public class Character
 {
     public string Name { get; }
@@ -60,7 +42,7 @@ public class Character
         Stats.Constitution += 1;
     }
 
-    public EffectiveStats GetEffectiveStats(Dictionary<string, GearItemDefinition> gearDefinitions)
+    public EffectiveStats GetEffectiveStats()
     {
         int attackBonus = 0;
         int defenseBonus = 0;
@@ -70,19 +52,17 @@ public class Character
 
         foreach (var gear in Equipment.Values)
         {
-            if (gearDefinitions.TryGetValue(gear.DefinitionId, out var definition))
-            {
-                var multiplier = gear.GetUpgradeMultiplier();
-                attackBonus += (int)(definition.AttackBonus * multiplier);
-                defenseBonus += (int)(definition.DefenseBonus * multiplier);
-                healthBonus += (int)(definition.HealthBonus * multiplier);
-                critBonus += (int)(definition.CritBonus * multiplier);
-                dodgeBonus += (int)(definition.DodgeBonus * multiplier);
-            }
+            var multiplier = gear.GetUpgradeMultiplier();
+            attackBonus += (int)(gear.Definition.AttackBonus * multiplier);
+            defenseBonus += (int)(gear.Definition.DefenseBonus * multiplier);
+            healthBonus += (int)(gear.Definition.HealthBonus * multiplier);
+            critBonus += (int)(gear.Definition.CritBonus * multiplier);
+            dodgeBonus += (int)(gear.Definition.DodgeBonus * multiplier);
         }
 
         return new EffectiveStats(
             Stats.Strength + attackBonus,
+            Stats.Dexterity + attackBonus,
             Stats.Constitution + defenseBonus,
             Stats.MaxHealth + healthBonus,
             Stats.Crit + critBonus,

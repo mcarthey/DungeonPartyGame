@@ -1,6 +1,7 @@
 ﻿using DungeonPartyGame.UI.Pages;
 using DungeonPartyGame.UI.ViewModels;
 using DungeonPartyGame.Core.Services;
+using DungeonPartyGame.Core.Models;
 using Microsoft.Extensions.Logging;
 
 namespace DungeonPartyGame;
@@ -24,8 +25,25 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<DiceService>();
         builder.Services.AddSingleton<CombatEngine>();
-        builder.Services.AddSingleton<MainViewModel>();
-        builder.Services.AddSingleton<MainPage>();
+        builder.Services.AddSingleton<SkillTreeService>();
+        builder.Services.AddSingleton<ProgressionService>();
+        builder.Services.AddSingleton<GearService>();
+        builder.Services.AddSingleton<GearUpgradeService>(sp => new GearUpgradeService(sp.GetRequiredService<GearService>()));
+
+        // Game session (shared state)
+        builder.Services.AddSingleton<GameSession>();
+
+        // ViewModels
+        builder.Services.AddTransient<PartyViewModel>();
+        builder.Services.AddTransient<SkillTreeViewModel>();
+        builder.Services.AddTransient<GearViewModel>();
+
+        // Pages
+        builder.Services.AddTransient<MainViewModel>();
+        builder.Services.AddTransient<MainPage>();
+        builder.Services.AddTransient<PartyPage>();
+        builder.Services.AddTransient<SkillTreePage>();
+        builder.Services.AddTransient<GearPage>();
         builder.Services.AddSingleton<AppShell>();
         builder.Services.AddSingleton<App>();
 

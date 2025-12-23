@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="DungeonPartyGame.UI.Pages.GearPage">
+
+    <VerticalStackLayout Padding="20" Spacing="16">
+        <Label Text="Gear Management" FontSize="24" HorizontalOptions="Center" />
+
+        <Label Text="{Binding SelectedCharacter.Name, StringFormat='Gear for {0}'}" FontSize="18" />
+
+        <Label Text="Equipped Gear:" FontSize="16" />
+        <CollectionView ItemsSource="{Binding EquippedGear}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="10" BackgroundColor="LightGray">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0"
+                               Text="{Binding Value.Definition.Name, StringFormat='{0} (Tier {1}, Level {2})'}"
+                               FontSize="14" />
+                        <Button Grid.Column="1"
+                                Text="Unequip"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type local:GearPage}}, Path=BindingContext.UnequipCommand}"
+                                CommandParameter="{Binding Key}" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Label Text="Inventory:" FontSize="16" />
+        <CollectionView ItemsSource="{Binding InventoryGear}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding SelectedGearItem}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="10" BackgroundColor="LightYellow">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0"
+                               Text="{Binding Definition.Name, StringFormat='{0} (Tier {1}, Level {2})'}"
+                               FontSize="14" />
+                        <Button Grid.Column="1"
+                                Text="Equip"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type local:GearPage}}, Path=BindingContext.EquipCommand}"
+                                CommandParameter="{Binding}" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Label Text="{Binding Inventory.Gold, StringFormat='Gold: {0}'}" FontSize="14" />
+        <Label Text="{Binding Inventory.UpgradeShards, StringFormat='Upgrade Shards: {0}'}" FontSize="14" />
+
+        <Button Text="Upgrade Selected Gear"
+                Command="{Binding UpgradeGearCommand}"
+                IsEnabled="{Binding CanUpgradeSelectedGear}" />
+
+        <Button Text="Back to Main"
+                Command="{Binding NavigateBackCommand}" />
+    </VerticalStackLayout>
+</ContentPage>

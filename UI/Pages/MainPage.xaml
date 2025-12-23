@@ -5,13 +5,27 @@
     x:Class="DungeonPartyGame.UI.Pages.MainPage">
 
     <VerticalStackLayout Padding="20" Spacing="16">
-        <Button Text="Create Parties"
-                Command="{Binding CreatePartiesCommand}" />
-        <Button Text="Start New Battle"
+        <Label Text="Dungeon Party Game" FontSize="24" HorizontalOptions="Center" />
+
+        <!-- Navigation Buttons -->
+        <Button Text="Party Management"
+                Command="{Binding NavigateToPartyCommand}" />
+
+        <!-- Combat Section -->
+        <Label Text="Combat" FontSize="18" />
+        <Button Text="Create Characters"
+                Command="{Binding CreateCharactersCommand}" />
+        <Button Text="Start New Combat"
                 Command="{Binding StartNewCombatCommand}" />
-        <Button Text="Next Turn"
-                Command="{Binding NextTurnCommand}" />
-        <ScrollView HeightRequest="400">
+        <Button Text="Next Round"
+                Command="{Binding NextRoundCommand}" />
+
+        <!-- Debug Section -->
+        <Label Text="Debug" FontSize="18" />
+        <Button Text="Grant XP (Debug)"
+                Command="{Binding GrantXpCommand}" />
+
+        <ScrollView HeightRequest="300">
             <Label Text="{Binding CombatLog}"
                    FontFamily="Courier New"
                    LineBreakMode="WordWrap"

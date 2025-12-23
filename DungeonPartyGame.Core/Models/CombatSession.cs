@@ -8,6 +8,9 @@ public class CombatSession
     public int RoundNumber { get; private set; } = 1;
     public bool IsComplete { get; private set; }
     public Party? WinningParty { get; private set; }
+    
+    // Alias for compatibility with ViewModels
+    public Party? Winner => WinningParty;
 
     public CombatSession(Party partyA, Party partyB)
     {
@@ -34,6 +37,9 @@ public class CombatSession
     {
         return TurnQueue.Count > 0 ? TurnQueue.Peek() : null;
     }
+    
+    // Alias for compatibility with ViewModels
+    public Character? CurrentAttacker => GetCurrentTurn()?.Actor;
 
     public void AdvanceTurn()
     {

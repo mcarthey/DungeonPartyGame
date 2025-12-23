@@ -26,7 +26,7 @@ public class GameEngine
     public void CompleteStage()
     {
         foreach (var member in _state.Party.Members)
-            member.GainLevel();
+            member.LevelUp();
 
         _state.AdvanceStage();
     }

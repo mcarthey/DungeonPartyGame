@@ -5,9 +5,12 @@ namespace DungeonPartyGame.Core.Services;
 public class CombatEngine
 {
     private readonly DiceService _dice;
-    public CombatEngine(DiceService dice)
+    private readonly GearService _gearService;
+
+    public CombatEngine(DiceService dice, GearService gearService)
     {
         _dice = dice;
+        _gearService = gearService;
     }
 
     public virtual CombatSession CreateSession(Party partyA, Party partyB)
@@ -15,7 +18,7 @@ public class CombatEngine
         return new CombatSession(partyA, partyB);
     }
 
-    public virtual CombatResult ExecuteTurn(CombatSession session)
+    public virtual CombatResult ExecuteRound(CombatSession session)
     {
         if (session.IsComplete)
         {
@@ -29,13 +32,7 @@ public class CombatEngine
         }
 
         var actor = currentTurn.Actor;
-        var skill = actor.ChooseSkill(session.RoundNumber);
-
-        // For now, only implement SingleEnemy targeting
-        if (skill.Targeting != TargetingRule.SingleEnemy)
-        {
-            throw new NotImplementedException($"Targeting rule {skill.Targeting} not yet implemented.");
-        }
+        // Use basic attack instead of skill selection
 
         // Select target: lowest HP enemy
         var enemyParty = currentTurn.OwningParty == session.PartyA ? session.PartyB : session.PartyA;
@@ -46,12 +43,16 @@ public class CombatEngine
             throw new InvalidOperationException("No valid target found.");
         }
 
-        // Calculate damage
-        var weapon = actor.Equipment.Weapon;
-        int baseDamage = _dice.Roll(weapon.MinDamage, weapon.MaxDamage);
-        double skillMultiplier = skill.DamageMultiplier;
-        int strBonus = actor.Stats.Strength;
-        int totalDamage = (int)Math.Round(baseDamage * skillMultiplier + strBonus);
+        // Calculate damage using effective stats
+        var actorStats = _gearService.GetEffectiveStats(actor);
+        var targetStats = _gearService.GetEffectiveStats(target);
+
+        // Simple damage formula: base damage + attack stat - defense
+        int baseDamage = 10; // Base attack damage
+        int attackBonus = actorStats.Attack;
+        int defenseReduction = targetStats.Defense / 4; // Simple defense calculation
+
+        int totalDamage = Math.Max(1, baseDamage + attackBonus - defenseReduction);
 
         target.ApplyDamage(totalDamage);
         var targetDefeated = !target.IsAlive;
@@ -61,11 +62,11 @@ public class CombatEngine
             RoundNumber = session.RoundNumber,
             Actor = actor,
             Target = target,
-            SkillName = skill.Name,
+            SkillName = "Basic Attack",
             Damage = totalDamage,
             TargetDefeated = targetDefeated,
             IsFinalTurn = session.IsComplete, // Will be updated after AdvanceTurn
-            SummaryText = $"{actor.Name} attacks {target.Name} with {skill.Name} ({totalDamage} dmg)\n{target.Name} HP: {target.Stats.CurrentHealth}"
+            SummaryText = $"{actor.Name} attacks {target.Name} ({totalDamage} dmg)\n{target.Name} HP: {target.Stats.CurrentHealth}"
         };
 
         // Advance turn and check completion
