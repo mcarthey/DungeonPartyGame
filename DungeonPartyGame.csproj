@@ -57,6 +57,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="DungeonPartyGame.Core\DungeonPartyGame.Core.csproj" />
+		<ProjectReference Include="DungeonPartyGame.UI\DungeonPartyGame.UI.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 	</ItemGroup>

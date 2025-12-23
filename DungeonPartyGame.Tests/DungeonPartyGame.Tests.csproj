@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <SkipBuildWhen Condition="'$(TargetFramework)' != 'net10.0'">true</SkipBuildWhen>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageReference Include="Moq" Version="4.20.70" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageReference Include="xunit" Version="2.9.3" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" Condition="'$(TargetFramework)' == 'net10.0'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DungeonPartyGame.Core\DungeonPartyGame.Core.csproj" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <ProjectReference Include="..\DungeonPartyGame.UI\DungeonPartyGame.UI.csproj" Condition="'$(TargetFramework)' == 'net10.0'" />
+  </ItemGroup>
+
+</Project>
