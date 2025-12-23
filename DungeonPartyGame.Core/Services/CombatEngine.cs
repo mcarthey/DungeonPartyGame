@@ -10,12 +10,12 @@ public class CombatEngine
         _dice = dice;
     }
 
-    public CombatSession CreateSession(Character a, Character b)
+    public virtual CombatSession CreateSession(Character a, Character b)
     {
         return new CombatSession(a, b);
     }
 
-    public CombatResult ExecuteRound(CombatSession session)
+    public virtual CombatResult ExecuteRound(CombatSession session)
     {
         if (session.IsComplete)
         {

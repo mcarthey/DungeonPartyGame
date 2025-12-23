@@ -7,5 +7,5 @@ public class DiceService
     {
         _random = random ?? new Random();
     }
-    public int Roll(int min, int max) => _random.Next(min, max + 1);
+    public virtual int Roll(int min, int max) => _random.Next(min, max + 1);
 }

@@ -74,4 +74,11 @@
 		<Compile Remove="**\*.AssemblyAttributes.cs" />
 	</ItemGroup>
 
+	<!-- Exclude Tests directory from main project build -->
+	<ItemGroup>
+		<Compile Remove="**/DungeonPartyGame.Tests/**" />
+		<EmbeddedResource Remove="**/DungeonPartyGame.Tests/**" />
+		<None Remove="**/DungeonPartyGame.Tests/**" />
+	</ItemGroup>
+
 </Project>

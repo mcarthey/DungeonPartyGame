@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <RootNamespace>DungeonPartyGame</RootNamespace>
     <SkipBuildWhen Condition="'$(TargetFramework)' != 'net10.0'">true</SkipBuildWhen>
   </PropertyGroup>
 
