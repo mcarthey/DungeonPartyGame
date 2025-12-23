@@ -11,7 +11,6 @@ public class MainViewModel : BindableObject
     private readonly CombatEngine _combatEngine;
     private readonly DiceService _diceService;
     private readonly GameSession _gameSession;
-    private readonly INavigation _navigation;
     private readonly ProgressionService _progressionService;
 
     private Character? _fighter;
@@ -30,13 +29,13 @@ public class MainViewModel : BindableObject
     public Command NextRoundCommand { get; }
     public Command NavigateToPartyCommand { get; }
     public Command GrantXpCommand { get; }
+    public GameSession GameSession => _gameSession;
 
-    public MainViewModel(CombatEngine combatEngine, DiceService diceService, GameSession gameSession, INavigation navigation, ProgressionService progressionService)
+    public MainViewModel(CombatEngine combatEngine, DiceService diceService, GameSession gameSession, ProgressionService progressionService)
     {
         _combatEngine = combatEngine;
         _diceService = diceService;
         _gameSession = gameSession;
-        _navigation = navigation;
         _progressionService = progressionService;
 
         CreateCharactersCommand = new Command(CreateCharacters);
@@ -124,10 +123,11 @@ public class MainViewModel : BindableObject
         NextRoundCommand.ChangeCanExecute();
     }
 
+    public event Action? NavigateToPartyRequested;
+
     private async Task NavigateToParty()
     {
-        var partyViewModel = new PartyViewModel(_gameSession, _navigation);
-        await _navigation.PushAsync(new PartyPage(partyViewModel));
+        NavigateToPartyRequested?.Invoke();
     }
 
     private void GrantXp()

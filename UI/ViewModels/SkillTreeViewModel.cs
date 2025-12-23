@@ -10,10 +10,11 @@ namespace DungeonPartyGame.UI.ViewModels;
 public class SkillTreeViewModel : INotifyPropertyChanged
 {
     private readonly GameSession _gameSession;
-    private readonly INavigation _navigation;
     private readonly SkillTreeService _skillTreeService;
     private readonly Character _character;
     private SkillNode? _selectedNode;
+
+    public event Action? NavigateBackRequested;
 
     public Character SelectedCharacter => _character;
 
@@ -38,15 +39,14 @@ public class SkillTreeViewModel : INotifyPropertyChanged
     public ICommand UnlockNodeCommand { get; }
     public ICommand NavigateBackCommand { get; }
 
-    public SkillTreeViewModel(GameSession gameSession, INavigation navigation, Character character)
+    public SkillTreeViewModel(Character character)
     {
-        _gameSession = gameSession;
-        _navigation = navigation;
+        _gameSession = new GameSession(); // This should be injected, but for now create a new one
         _character = character;
         _skillTreeService = new SkillTreeService();
 
         UnlockNodeCommand = new Command(OnUnlockNode, () => CanUnlockSelectedNode);
-        NavigateBackCommand = new Command(async () => await _navigation.PopAsync());
+        NavigateBackCommand = new Command(() => NavigateBackRequested?.Invoke());
 
         LoadAvailableNodes();
         LoadUnlockedSkills();

@@ -1,12 +1,12 @@
 namespace DungeonPartyGame.Core.Models;
 
-public class GameState
+public class EncounterState
 {
     public Party Party { get; }
     public int CurrentStage { get; private set; } = 1;
     public string LastEvent { get; private set; } = "Game started";
 
-    public GameState(Party party)
+    public EncounterState(Party party)
     {
         Party = party;
     }

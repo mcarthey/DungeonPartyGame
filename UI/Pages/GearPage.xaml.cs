@@ -8,5 +8,12 @@ public partial class GearPage : ContentPage
     {
         InitializeComponent();
         BindingContext = viewModel;
+
+        viewModel.NavigateBackRequested += OnNavigateBackRequested;
+    }
+
+    private async void OnNavigateBackRequested()
+    {
+        await Navigation.PopAsync();
     }
 }

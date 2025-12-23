@@ -4,20 +4,21 @@ namespace DungeonPartyGame.Core.Services;
 
 public class GameEngine
 {
-    private readonly GameState _state;
+    private readonly EncounterState _state;
+    private static readonly Random _random = new Random();
 
-    public GameEngine(GameState state)
+    public GameEngine(EncounterState state)
     {
         _state = state;
     }
 
-    public GameState GetState() => _state;
+    public EncounterState GetState() => _state;
 
     public void RunEncounter()
     {
         foreach (var member in _state.Party.Members)
         {
-            member.ApplyDamage(Random.Shared.Next(5, 15));
+            member.ApplyDamage(_random.Next(5, 15));
         }
 
         _state.Log("Encounter resolved. Party took damage.");

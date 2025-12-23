@@ -11,7 +11,7 @@ public class GameEngineTests
     {
         // Arrange
         var party = new Party();
-        var state = new GameState(party);
+        var state = new EncounterState(party);
 
         // Act
         var engine = new GameEngine(state);
@@ -29,7 +29,7 @@ public class GameEngineTests
         var char2 = CreateTestCharacter("Char2");
         party.Add(char1);
         party.Add(char2);
-        var state = new GameState(party);
+        var state = new EncounterState(party);
         var engine = new GameEngine(state);
 
         // Act
@@ -50,7 +50,7 @@ public class GameEngineTests
         var char2 = CreateTestCharacter("Char2");
         party.Add(char1);
         party.Add(char2);
-        var state = new GameState(party);
+        var state = new EncounterState(party);
         var engine = new GameEngine(state);
 
         // Act

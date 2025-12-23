@@ -8,5 +8,17 @@ public partial class MainPage : ContentPage
     {
         InitializeComponent();
         BindingContext = vm;
+
+        if (vm is MainViewModel mainViewModel)
+        {
+            mainViewModel.NavigateToPartyRequested += OnNavigateToPartyRequested;
+        }
+    }
+
+    private async void OnNavigateToPartyRequested()
+    {
+        var mainViewModel = (MainViewModel)BindingContext;
+        var partyViewModel = new PartyViewModel(mainViewModel.GameSession);
+        await Navigation.PushAsync(new PartyPage(partyViewModel));
     }
 }

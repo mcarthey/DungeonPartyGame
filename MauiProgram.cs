@@ -33,10 +33,10 @@ public static class MauiProgram
         // Game session (shared state)
         builder.Services.AddSingleton<GameSession>();
 
-        // ViewModels
-        builder.Services.AddTransient<PartyViewModel>();
-        builder.Services.AddTransient<SkillTreeViewModel>();
-        builder.Services.AddTransient<GearViewModel>();
+        // ViewModels - created manually in pages
+        // builder.Services.AddTransient<PartyViewModel>();
+        // builder.Services.AddTransient<SkillTreeViewModel>();
+        // builder.Services.AddTransient<GearViewModel>();
 
         // Pages
         builder.Services.AddTransient<MainViewModel>();

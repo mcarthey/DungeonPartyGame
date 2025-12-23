@@ -10,11 +10,12 @@ namespace DungeonPartyGame.UI.ViewModels;
 public class GearViewModel : INotifyPropertyChanged
 {
     private readonly GameSession _gameSession;
-    private readonly INavigation _navigation;
     private readonly GearService _gearService;
     private readonly GearUpgradeService _gearUpgradeService;
     private readonly Character _character;
     private GearInstance? _selectedGearItem;
+
+    public event Action? NavigateBackRequested;
 
     public Character SelectedCharacter => _character;
     public Inventory Inventory => _gameSession.Inventory;
@@ -40,10 +41,9 @@ public class GearViewModel : INotifyPropertyChanged
     public ICommand UpgradeGearCommand { get; }
     public ICommand NavigateBackCommand { get; }
 
-    public GearViewModel(GameSession gameSession, INavigation navigation, Character character)
+    public GearViewModel(Character character)
     {
-        _gameSession = gameSession;
-        _navigation = navigation;
+        _gameSession = new GameSession(); // This should be injected, but for now create a new one
         _character = character;
         _gearService = new GearService();
         _gearUpgradeService = new GearUpgradeService(_gearService);
@@ -51,7 +51,7 @@ public class GearViewModel : INotifyPropertyChanged
         EquipCommand = new Command<GearInstance>(OnEquip);
         UnequipCommand = new Command<GearSlot>(OnUnequip);
         UpgradeGearCommand = new Command(OnUpgradeGear, () => CanUpgradeSelectedGear);
-        NavigateBackCommand = new Command(async () => await _navigation.PopAsync());
+        NavigateBackCommand = new Command(() => NavigateBackRequested?.Invoke());
 
         LoadEquippedGear();
         LoadInventoryGear();

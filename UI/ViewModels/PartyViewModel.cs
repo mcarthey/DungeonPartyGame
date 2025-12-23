@@ -11,8 +11,11 @@ namespace DungeonPartyGame.UI.ViewModels;
 public class PartyViewModel : INotifyPropertyChanged
 {
     private readonly GameSession _gameSession;
-    private readonly INavigation _navigation;
     private Character? _selectedCharacter;
+
+    public event Action? NavigateToSkillsRequested;
+    public event Action? NavigateToGearRequested;
+    public event Action? NavigateBackRequested;
 
     public ObservableCollection<Character> PartyMembers { get; } = new();
 
@@ -31,10 +34,9 @@ public class PartyViewModel : INotifyPropertyChanged
     public ICommand NavigateToGearCommand { get; }
     public ICommand NavigateBackCommand { get; }
 
-    public PartyViewModel(GameSession gameSession, INavigation navigation)
+    public PartyViewModel(GameSession gameSession)
     {
         _gameSession = gameSession;
-        _navigation = navigation;
 
         // Initialize party members
         foreach (var character in _gameSession.Party)
@@ -43,32 +45,14 @@ public class PartyViewModel : INotifyPropertyChanged
         }
 
         SelectCharacterCommand = new Command<Character>(OnSelectCharacter);
-        NavigateToSkillsCommand = new Command(async () => await NavigateToSkills());
-        NavigateToGearCommand = new Command(async () => await NavigateToGear());
-        NavigateBackCommand = new Command(async () => await _navigation.PopAsync());
+        NavigateToSkillsCommand = new Command(() => NavigateToSkillsRequested?.Invoke());
+        NavigateToGearCommand = new Command(() => NavigateToGearRequested?.Invoke());
+        NavigateBackCommand = new Command(() => NavigateBackRequested?.Invoke());
     }
 
     private void OnSelectCharacter(Character character)
     {
         SelectedCharacter = character;
-    }
-
-    private async Task NavigateToSkills()
-    {
-        if (SelectedCharacter != null)
-        {
-            var skillTreeViewModel = new SkillTreeViewModel(_gameSession, _navigation, SelectedCharacter);
-            await _navigation.PushAsync(new SkillTreePage(skillTreeViewModel));
-        }
-    }
-
-    private async Task NavigateToGear()
-    {
-        if (SelectedCharacter != null)
-        {
-            var gearViewModel = new GearViewModel(_gameSession, _navigation, SelectedCharacter);
-            await _navigation.PushAsync(new GearPage(gearViewModel));
-        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
