@@ -6,11 +6,13 @@ public class CombatEngine
 {
     private readonly DiceService _dice;
     private readonly GearService _gearService;
+    private readonly ISkillSelector _skillSelector;
 
-    public CombatEngine(DiceService dice, GearService gearService)
+    public CombatEngine(DiceService dice, GearService gearService, ISkillSelector skillSelector)
     {
         _dice = dice;
         _gearService = gearService;
+        _skillSelector = skillSelector;
     }
 
     public virtual CombatSession CreateSession(Party partyA, Party partyB)
@@ -32,11 +34,31 @@ public class CombatEngine
         }
 
         var actor = currentTurn.Actor;
-        // Use basic attack instead of skill selection
+        var skill = _skillSelector.SelectSkill(actor, session);
+        var usingSkill = skill != null && skill.CanUse(session.RoundNumber);
 
-        // Select target: lowest HP enemy
-        var enemyParty = currentTurn.OwningParty == session.PartyA ? session.PartyB : session.PartyA;
-        var target = enemyParty.AliveMembers.OrderBy(c => c.Stats.CurrentHealth).FirstOrDefault();
+        if (usingSkill && skill.Targeting == TargetingRule.AllEnemies)
+        {
+            throw new NotImplementedException("Targeting rule AllEnemies not yet implemented.");
+        }
+
+        // Select target based on skill or default to lowest HP enemy
+        Character target;
+
+        if (usingSkill && skill.Targeting == TargetingRule.Self)
+        {
+            target = actor;
+        }
+        else
+        {
+            var enemyParty = currentTurn.OwningParty == session.PartyA
+                ? session.PartyB
+                : session.PartyA;
+
+            target = enemyParty.AliveMembers
+                .OrderBy(c => c.Stats.CurrentHealth)
+                .FirstOrDefault();
+        }
 
         if (target == null)
         {
@@ -47,26 +69,38 @@ public class CombatEngine
         var actorStats = _gearService.GetEffectiveStats(actor);
         var targetStats = _gearService.GetEffectiveStats(target);
 
-        // Simple damage formula: base damage + attack stat - defense
-        int baseDamage = 10; // Base attack damage
+        int baseDamage = _dice.Roll(5, 10); // Roll 5d10 for base damage
         int attackBonus = actorStats.Attack;
-        int defenseReduction = targetStats.Defense / 4; // Simple defense calculation
+        int defenseReduction = targetStats.Defense / 4;
 
-        int totalDamage = Math.Max(1, baseDamage + attackBonus - defenseReduction);
+        double multiplier = usingSkill ? skill.DamageMultiplier : 1.0;
+
+        int totalDamage = Math.Max(
+            1,
+            (int)((baseDamage + attackBonus) * multiplier) - defenseReduction
+        );
 
         target.ApplyDamage(totalDamage);
         var targetDefeated = !target.IsAlive;
+
+        if (usingSkill)
+        {
+            skill.MarkUsed(session.RoundNumber);
+        }
 
         var result = new CombatResult
         {
             RoundNumber = session.RoundNumber,
             Actor = actor,
             Target = target,
-            SkillName = "Basic Attack",
+            SkillName = usingSkill ? skill.Name : "Basic Attack",
             Damage = totalDamage,
             TargetDefeated = targetDefeated,
             IsFinalTurn = session.IsComplete, // Will be updated after AdvanceTurn
-            SummaryText = $"{actor.Name} attacks {target.Name} ({totalDamage} dmg)\n{target.Name} HP: {target.Stats.CurrentHealth}"
+            SummaryText =
+                usingSkill
+                    ? $"{actor.Name} uses {skill.Name} on {target.Name} ({totalDamage} dmg)\n{target.Name} HP: {target.Stats.CurrentHealth}"
+                    : $"{actor.Name} attacks {target.Name} ({totalDamage} dmg)\n{target.Name} HP: {target.Stats.CurrentHealth}"
         };
 
         // Advance turn and check completion

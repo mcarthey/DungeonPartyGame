@@ -29,6 +29,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ProgressionService>();
         builder.Services.AddSingleton<GearService>();
         builder.Services.AddSingleton<GearUpgradeService>(sp => new GearUpgradeService(sp.GetRequiredService<GearService>()));
+        builder.Services.AddSingleton<ISkillSelector, DefaultSkillSelector>();
 
         // Game session (shared state)
         builder.Services.AddSingleton<GameSession>();

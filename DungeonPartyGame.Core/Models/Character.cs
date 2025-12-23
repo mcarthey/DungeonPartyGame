@@ -25,7 +25,8 @@ public class Character
     public Stats Stats { get; }
     public CharacterProgression Progression { get; }
     public Dictionary<GearSlot, GearInstance> Equipment { get; }
-    public List<SkillDefinition> UnlockedSkills { get; }
+    public List<Skill> UnlockedSkills { get; }
+    public List<Skill> EquippedSkills { get; }
 
     public Character(string name, CharacterRole role, Stats stats)
     {
@@ -34,7 +35,8 @@ public class Character
         Stats = stats;
         Progression = new CharacterProgression();
         Equipment = new Dictionary<GearSlot, GearInstance>();
-        UnlockedSkills = new List<SkillDefinition>();
+        UnlockedSkills = new List<Skill>();
+        EquippedSkills = new List<Skill>();
     }
 
     public bool IsAlive => Stats.CurrentHealth > 0;

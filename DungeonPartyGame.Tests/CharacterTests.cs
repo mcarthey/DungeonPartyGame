@@ -10,18 +10,18 @@ public class CharacterTests
     {
         // Arrange
         var stats = new Stats(10, 10, 10, 100);
-        var equipment = new Equipment(new Weapon("Sword", 5, 10, "Strength"));
         var skills = new List<Skill> { new Skill("Attack", "Basic attack", TargetingRule.SingleEnemy, 1.0, 0) };
 
         // Act
-        var character = new Character("TestChar", Role.Tank, stats, equipment, skills);
+        var character = new Character("TestChar", Role.Tank, stats);
+        character.UnlockedSkills.AddRange(skills);
+        character.EquippedSkills.AddRange(skills);
 
         // Assert
         Assert.Equal("TestChar", character.Name);
         Assert.Equal(Role.Tank, character.Role);
         Assert.Equal(1, character.Level);
         Assert.Equal(stats, character.Stats);
-        Assert.Equal(equipment, character.Equipment);
         Assert.Equal(skills, character.UnlockedSkills);
         Assert.Equal(skills, character.EquippedSkills);
     }
@@ -156,9 +156,10 @@ public class CharacterTests
     {
         // Arrange
         var stats = new Stats(10, 10, 10, 100);
-        var equipment = new Equipment(new Weapon("Sword", 5, 10, "Strength"));
         var skills = new List<Skill> { new Skill("Attack", "Basic attack", TargetingRule.SingleEnemy, 1.0, 0) };
-        var character = new Character("TestChar", Role.Tank, stats, equipment, skills);
+        var character = new Character("TestChar", Role.Tank, stats);
+        character.UnlockedSkills.AddRange(skills);
+        character.EquippedSkills.AddRange(skills);
 
         // Act & Assert
         Assert.Equal(skills, character.EquippedSkills);

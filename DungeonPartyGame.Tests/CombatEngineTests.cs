@@ -8,12 +8,16 @@ namespace DungeonPartyGame;
 public class CombatEngineTests
 {
     private readonly Mock<DiceService> _diceServiceMock;
+    private readonly Mock<GearService> _gearServiceMock;
+    private readonly Mock<ISkillSelector> _skillSelectorMock;
     private readonly CombatEngine _combatEngine;
 
     public CombatEngineTests()
     {
         _diceServiceMock = new Mock<DiceService>(MockBehavior.Loose, (Random)null);
-        _combatEngine = new CombatEngine(_diceServiceMock.Object);
+        _gearServiceMock = new Mock<GearService>();
+        _skillSelectorMock = new Mock<ISkillSelector>();
+        _combatEngine = new CombatEngine(_diceServiceMock.Object, _gearServiceMock.Object, _skillSelectorMock.Object);
     }
 
     [Fact]
@@ -32,7 +36,7 @@ public class CombatEngineTests
     }
 
     [Fact]
-    public void ExecuteTurn_ThrowsException_WhenSessionComplete()
+    public void ExecuteRound_ThrowsException_WhenSessionComplete()
     {
         // Arrange
         var partyA = CreateTestParty("A");
@@ -41,12 +45,12 @@ public class CombatEngineTests
         session.CompleteCombat(partyA);
 
         // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() => _combatEngine.ExecuteTurn(session));
+        var exception = Assert.Throws<InvalidOperationException>(() => _combatEngine.ExecuteRound(session));
         Assert.Equal("Combat session is already complete.", exception.Message);
     }
 
     [Fact]
-    public void ExecuteTurn_ThrowsException_WhenNoCurrentTurn()
+    public void ExecuteRound_ThrowsException_WhenNoCurrentTurn()
     {
         // Arrange
         var partyA = CreateTestParty("A");
@@ -60,12 +64,12 @@ public class CombatEngineTests
         }
 
         // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() => _combatEngine.ExecuteTurn(session));
+        var exception = Assert.Throws<InvalidOperationException>(() => _combatEngine.ExecuteRound(session));
         Assert.Equal("No current turn available.", exception.Message);
     }
 
     [Fact]
-    public void ExecuteTurn_ThrowsException_WhenNoValidTarget()
+    public void ExecuteRound_ThrowsException_WhenNoValidTarget()
     {
         // Arrange
         var partyA = CreateTestParty("A");
@@ -73,12 +77,12 @@ public class CombatEngineTests
         var session = _combatEngine.CreateSession(partyA, partyB);
 
         // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() => _combatEngine.ExecuteTurn(session));
+        var exception = Assert.Throws<InvalidOperationException>(() => _combatEngine.ExecuteRound(session));
         Assert.Equal("No valid target found.", exception.Message);
     }
 
     [Fact]
-    public void ExecuteTurn_ThrowsNotImplementedException_ForUnsupportedTargeting()
+    public void ExecuteRound_ThrowsNotImplementedException_ForUnsupportedTargeting()
     {
         // Arrange
         var partyA = new Party();
@@ -93,13 +97,15 @@ public class CombatEngineTests
         var partyB = CreateTestParty("B");
         var session = _combatEngine.CreateSession(partyA, partyB);
 
+        _skillSelectorMock.Setup(s => s.SelectSkill(charA, session)).Returns(skill);
+
         // Act & Assert
-        var exception = Assert.Throws<NotImplementedException>(() => _combatEngine.ExecuteTurn(session));
+        var exception = Assert.Throws<NotImplementedException>(() => _combatEngine.ExecuteRound(session));
         Assert.Equal("Targeting rule AllEnemies not yet implemented.", exception.Message);
     }
 
     [Fact]
-    public void ExecuteTurn_CalculatesDamageCorrectly()
+    public void ExecuteRound_CalculatesDamageCorrectly()
     {
         // Arrange
         _diceServiceMock.Setup(d => d.Roll(5, 10)).Returns(7); // Base damage = 7
@@ -107,23 +113,31 @@ public class CombatEngineTests
         var partyB = CreateTestParty("B");
         var session = _combatEngine.CreateSession(partyA, partyB);
 
+        var actor = partyA.Members[0];
+        var target = partyB.Members[0];
+        _gearServiceMock.Setup(g => g.GetEffectiveStats(actor)).Returns(new EffectiveStats(3, 0, 100, 0, 0));
+        _gearServiceMock.Setup(g => g.GetEffectiveStats(target)).Returns(new EffectiveStats(0, 0, 100, 0, 0));
+
+        var skill = new Skill("Attack", "Basic attack", TargetingRule.SingleEnemy, 1.0, 0);
+        _skillSelectorMock.Setup(s => s.SelectSkill(actor, session)).Returns(skill);
+
         // Act
-        var result = _combatEngine.ExecuteTurn(session);
+        var result = _combatEngine.ExecuteRound(session);
 
         // Assert
         Assert.Equal(1, result.RoundNumber);
         Assert.Equal("A", result.Actor.Name);
         Assert.Equal("B", result.Target.Name);
         Assert.Equal("Attack", result.SkillName);
-        Assert.Equal(10, result.Damage); // 7 * 1.0 + 3 = 10
+        Assert.Equal(10, result.Damage); // 7 + 3 = 10
         Assert.Equal(90, result.Target.Stats.CurrentHealth); // 100 - 10
         Assert.False(result.TargetDefeated);
         Assert.False(result.IsFinalTurn);
-        Assert.Contains("A attacks B with Attack (10 dmg)", result.SummaryText);
+        Assert.Contains("A uses Attack on B (10 dmg)", result.SummaryText);
     }
 
     [Fact]
-    public void ExecuteTurn_CompletesCombat_WhenTargetDies()
+    public void ExecuteRound_CompletesCombat_WhenTargetDies()
     {
         // Arrange
         _diceServiceMock.Setup(d => d.Roll(5, 10)).Returns(10); // Max damage
@@ -134,7 +148,7 @@ public class CombatEngineTests
         var session = _combatEngine.CreateSession(partyA, partyB);
 
         // Act
-        var result = _combatEngine.ExecuteTurn(session);
+        var result = _combatEngine.ExecuteRound(session);
 
         // Assert
         Assert.True(result.TargetDefeated);
@@ -145,7 +159,7 @@ public class CombatEngineTests
     }
 
     [Fact]
-    public void ExecuteTurn_AdvancesTurn()
+    public void ExecuteRound_AdvancesTurn()
     {
         // Arrange
         _diceServiceMock.Setup(d => d.Roll(5, 10)).Returns(1); // Min damage
@@ -155,14 +169,14 @@ public class CombatEngineTests
         var initialQueueCount = session.TurnQueue.Count;
 
         // Act
-        _combatEngine.ExecuteTurn(session);
+        _combatEngine.ExecuteRound(session);
 
         // Assert
         Assert.Equal(initialQueueCount - 1, session.TurnQueue.Count);
     }
 
     [Fact]
-    public void ExecuteTurn_SelectsLowestHPTarget()
+    public void ExecuteRound_SelectsLowestHPTarget()
     {
         // Arrange
         _diceServiceMock.Setup(d => d.Roll(5, 10)).Returns(1);
@@ -177,7 +191,7 @@ public class CombatEngineTests
         var session = _combatEngine.CreateSession(partyA, partyB);
 
         // Act
-        var result = _combatEngine.ExecuteTurn(session);
+        var result = _combatEngine.ExecuteRound(session);
 
         // Assert
         Assert.Equal(charB1, result.Target); // Lower HP target selected
@@ -194,8 +208,10 @@ public class CombatEngineTests
     private static Character CreateTestCharacter(string name, Role role, int strength = 10, int maxHealth = 100)
     {
         var stats = new Stats(strength, 10, 10, maxHealth);
-        var equipment = new Equipment(new Weapon("Sword", 5, 10, "Strength"));
+        var character = new Character(name, role, stats);
         var skills = new List<Skill> { new Skill("Attack", "Basic attack", TargetingRule.SingleEnemy, 1.0, 0) };
-        return new Character(name, role, stats, equipment, skills);
+        character.UnlockedSkills.AddRange(skills);
+        character.EquippedSkills.AddRange(skills);
+        return character;
     }
 }

@@ -48,7 +48,14 @@ public class SkillTreeService
         var skillDef = tree.GetSkillDefinition(node.SkillId);
         if (skillDef != null && skillDef.SkillType == SkillType.Active)
         {
-            character.UnlockedSkills.Add(skillDef);
+            var skill = new Skill(
+                skillDef.Name,
+                skillDef.Description,
+                skillDef.TargetingRule,
+                skillDef.BasePower / 10.0, // Convert base power to damage multiplier
+                skillDef.Cooldown
+            );
+            character.UnlockedSkills.Add(skill);
         }
 
         return true;
