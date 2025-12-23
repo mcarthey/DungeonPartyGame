@@ -31,8 +31,20 @@ public static class MauiProgram
         builder.Services.AddSingleton<GearUpgradeService>(sp => new GearUpgradeService(sp.GetRequiredService<GearService>()));
         builder.Services.AddSingleton<ISkillSelector, DefaultSkillSelector>();
 
-        // Game session (shared state)
-        builder.Services.AddSingleton<GameSession>();
+        // Logging
+        builder.Services.AddLogging();
+
+        // Game session (shared state) - initialize with a default party
+        builder.Services.AddSingleton<GameSession>(sp =>
+        {
+            var logger = sp.GetRequiredService<ILogger<GameSession>>();
+            var gameSession = new GameSession();
+            // Initialize with a default party
+            var defaultParty = new Party();
+            gameSession.AddParty(defaultParty);
+            logger.LogInformation("GameSession initialized with default party");
+            return gameSession;
+        });
 
         // ViewModels - created manually in pages
         // builder.Services.AddTransient<PartyViewModel>();

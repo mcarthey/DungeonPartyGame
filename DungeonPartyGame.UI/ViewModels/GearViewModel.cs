@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using DungeonPartyGame.Core.Models;
 using DungeonPartyGame.Core.Services;
+using Microsoft.Extensions.Logging;
 
 namespace DungeonPartyGame.UI.ViewModels;
 
@@ -13,6 +14,7 @@ public class GearViewModel : INotifyPropertyChanged
     private readonly GearService _gearService;
     private readonly GearUpgradeService _gearUpgradeService;
     private readonly Character _character;
+    private readonly ILogger<GearViewModel> _logger;
     private GearInstance? _selectedGearItem;
 
     public event Action? NavigateBackRequested;
@@ -41,20 +43,33 @@ public class GearViewModel : INotifyPropertyChanged
     public ICommand UpgradeGearCommand { get; }
     public ICommand NavigateBackCommand { get; }
 
-    public GearViewModel(Character character)
+    public GearViewModel(Character character, ILoggerFactory loggerFactory)
     {
-        _gameSession = new GameSession(); // This should be injected, but for now create a new one
-        _character = character;
-        _gearService = new GearService();
-        _gearUpgradeService = new GearUpgradeService(_gearService);
+        _logger = loggerFactory.CreateLogger<GearViewModel>();
+        _logger.LogInformation("GearViewModel constructor called for character {Name}", character?.Name ?? "null");
 
-        EquipCommand = new Command<GearInstance>(OnEquip);
-        UnequipCommand = new Command<GearSlot>(OnUnequip);
-        UpgradeGearCommand = new Command(OnUpgradeGear, () => CanUpgradeSelectedGear);
-        NavigateBackCommand = new Command(() => NavigateBackRequested?.Invoke());
+        try
+        {
+            _character = character ?? throw new ArgumentNullException(nameof(character));
+            _gameSession = new GameSession(); // This should be injected, but for now create a new one
+            _gearService = new GearService();
+            _gearUpgradeService = new GearUpgradeService(_gearService);
 
-        LoadEquippedGear();
-        LoadInventoryGear();
+            EquipCommand = new Command<GearInstance>(OnEquip);
+            UnequipCommand = new Command<GearSlot>(OnUnequip);
+            UpgradeGearCommand = new Command(OnUpgradeGear, () => CanUpgradeSelectedGear);
+            NavigateBackCommand = new Command(() => NavigateBackRequested?.Invoke());
+
+            LoadEquippedGear();
+            LoadInventoryGear();
+
+            _logger.LogInformation("GearViewModel initialized successfully for character {Name}", _character.Name);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initializing GearViewModel for character {Name}", character?.Name ?? "null");
+            throw;
+        }
     }
 
     private void LoadEquippedGear()

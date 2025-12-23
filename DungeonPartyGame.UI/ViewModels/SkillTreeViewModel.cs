@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using DungeonPartyGame.Core.Models;
 using DungeonPartyGame.Core.Services;
+using Microsoft.Extensions.Logging;
 
 namespace DungeonPartyGame.UI.ViewModels;
 
@@ -12,6 +13,7 @@ public class SkillTreeViewModel : INotifyPropertyChanged
     private readonly GameSession _gameSession;
     private readonly SkillTreeService _skillTreeService;
     private readonly Character _character;
+    private readonly ILogger<SkillTreeViewModel> _logger;
     private SkillNode? _selectedNode;
 
     public event Action? NavigateBackRequested;
@@ -39,17 +41,30 @@ public class SkillTreeViewModel : INotifyPropertyChanged
     public ICommand UnlockNodeCommand { get; }
     public ICommand NavigateBackCommand { get; }
 
-    public SkillTreeViewModel(Character character)
+    public SkillTreeViewModel(Character character, ILoggerFactory loggerFactory)
     {
-        _gameSession = new GameSession(); // This should be injected, but for now create a new one
-        _character = character;
-        _skillTreeService = new SkillTreeService();
+        _logger = loggerFactory.CreateLogger<SkillTreeViewModel>();
+        _logger.LogInformation("SkillTreeViewModel constructor called for character {Name}", character?.Name ?? "null");
 
-        UnlockNodeCommand = new Command(OnUnlockNode, () => CanUnlockSelectedNode);
-        NavigateBackCommand = new Command(() => NavigateBackRequested?.Invoke());
+        try
+        {
+            _character = character ?? throw new ArgumentNullException(nameof(character));
+            _gameSession = new GameSession(); // This should be injected, but for now create a new one
+            _skillTreeService = new SkillTreeService();
 
-        LoadAvailableNodes();
-        LoadUnlockedSkills();
+            UnlockNodeCommand = new Command(OnUnlockNode, () => CanUnlockSelectedNode);
+            NavigateBackCommand = new Command(() => NavigateBackRequested?.Invoke());
+
+            LoadAvailableNodes();
+            LoadUnlockedSkills();
+
+            _logger.LogInformation("SkillTreeViewModel initialized successfully for character {Name}", _character.Name);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initializing SkillTreeViewModel for character {Name}", character?.Name ?? "null");
+            throw;
+        }
     }
 
     private void LoadAvailableNodes()
