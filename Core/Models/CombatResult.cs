@@ -10,4 +10,6 @@ public class CombatResult
     public int DefenderHP { get; set; }
     public bool IsDefeated { get; set; }
     public string LogMessage { get; set; } = string.Empty;
+    public bool IsFinalRound { get; set; }
+    public string SummaryText { get; set; } = string.Empty;
 }

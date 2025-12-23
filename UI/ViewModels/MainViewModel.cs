@@ -11,7 +11,7 @@ public class MainViewModel : BindableObject
 
     private Character? _fighter;
     private Character? _rogue;
-    private List<CombatResult> _combatResults = new();
+    private CombatSession? _currentSession;
     private string _combatLog = string.Empty;
 
     public string CombatLog
@@ -21,7 +21,8 @@ public class MainViewModel : BindableObject
     }
 
     public Command CreateCharactersCommand { get; }
-    public Command StartCombatCommand { get; }
+    public Command StartNewCombatCommand { get; }
+    public Command NextRoundCommand { get; }
 
     public MainViewModel(CombatEngine combatEngine, DiceService diceService)
     {
@@ -29,7 +30,8 @@ public class MainViewModel : BindableObject
         _diceService = diceService;
 
         CreateCharactersCommand = new Command(CreateCharacters);
-        StartCombatCommand = new Command(StartCombat, () => _fighter != null && _rogue != null);
+        StartNewCombatCommand = new Command(StartNewCombat, () => _fighter != null && _rogue != null);
+        NextRoundCommand = new Command(ExecuteNextRound, () => _currentSession != null && !_currentSession.IsComplete);
     }
 
     private void CreateCharacters()
@@ -54,33 +56,51 @@ public class MainViewModel : BindableObject
                 new Skill("Sneak Attack", "Hits from the shadows.", 1.4, 2)
             }
         );
-        CombatLog = "Characters created. Press Start Combat.";
-        _combatResults.Clear();
-        StartCombatCommand.ChangeCanExecute();
+        CombatLog = "Characters created. Press Start New Combat.";
+        _currentSession = null;
+        StartNewCombatCommand.ChangeCanExecute();
+        NextRoundCommand.ChangeCanExecute();
     }
 
-    private void StartCombat()
+    private void StartNewCombat()
     {
         if (_fighter == null || _rogue == null)
         {
             CombatLog = "Create characters first.";
             return;
         }
+
         // Reset HP for replay
         _fighter.Stats.CurrentHealth = _fighter.Stats.MaxHealth;
         _rogue.Stats.CurrentHealth = _rogue.Stats.MaxHealth;
-        _combatResults = _combatEngine.RunCombat(_fighter, _rogue).ToList();
-        CombatLog = FormatCombatLog(_combatResults);
+
+        _currentSession = _combatEngine.CreateSession(_fighter, _rogue);
+
+        var initiativeWinner = _currentSession.CurrentAttacker.Name;
+        CombatLog = $"Combat begins!\n{initiativeWinner} wins initiative.\n\n";
+
+        NextRoundCommand.ChangeCanExecute();
     }
 
-    private string FormatCombatLog(IEnumerable<CombatResult> results)
+    private void ExecuteNextRound()
     {
-        var sb = new StringBuilder();
-        foreach (var r in results)
+        if (_currentSession == null || _currentSession.IsComplete)
         {
-            sb.AppendLine(r.LogMessage);
-            sb.AppendLine();
+            return;
         }
-        return sb.ToString();
+
+        var result = _combatEngine.ExecuteRound(_currentSession);
+
+        var sb = new StringBuilder(CombatLog);
+        sb.AppendLine(result.LogMessage);
+        if (result.IsFinalRound)
+        {
+            sb.AppendLine();
+            sb.AppendLine(result.SummaryText);
+        }
+        sb.AppendLine();
+        CombatLog = sb.ToString();
+
+        NextRoundCommand.ChangeCanExecute();
     }
 }

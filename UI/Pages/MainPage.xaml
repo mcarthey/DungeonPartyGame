@@ -7,8 +7,10 @@
     <VerticalStackLayout Padding="20" Spacing="16">
         <Button Text="Create Characters"
                 Command="{Binding CreateCharactersCommand}" />
-        <Button Text="Start Combat"
-                Command="{Binding StartCombatCommand}" />
+        <Button Text="Start New Combat"
+                Command="{Binding StartNewCombatCommand}" />
+        <Button Text="Next Round"
+                Command="{Binding NextRoundCommand}" />
         <ScrollView HeightRequest="400">
             <Label Text="{Binding CombatLog}"
                    FontFamily="Courier New"
