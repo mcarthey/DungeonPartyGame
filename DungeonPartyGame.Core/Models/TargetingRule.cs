@@ -5,5 +5,6 @@ public enum TargetingRule
     SingleEnemy,
     AllEnemies,
     Ally,
+    AllAllies,
     Self
 }

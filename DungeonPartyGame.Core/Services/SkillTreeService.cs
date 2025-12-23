@@ -51,6 +51,7 @@ public class SkillTreeService
             var skill = new Skill(
                 skillDef.Name,
                 skillDef.Description,
+                skillDef.SkillType,
                 skillDef.TargetingRule,
                 skillDef.BasePower / 10.0, // Convert base power to damage multiplier
                 skillDef.Cooldown

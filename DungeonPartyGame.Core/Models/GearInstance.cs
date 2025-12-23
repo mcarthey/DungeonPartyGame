@@ -9,6 +9,15 @@ public class GearInstance
 
     public GearInstance(string instanceId, string definitionId, int currentTier = 1, int upgradeLevel = 0)
     {
+        if (string.IsNullOrEmpty(instanceId))
+            throw new ArgumentException("Instance ID cannot be null or empty", nameof(instanceId));
+        if (string.IsNullOrEmpty(definitionId))
+            throw new ArgumentException("Definition ID cannot be null or empty", nameof(definitionId));
+        if (currentTier < 1)
+            throw new ArgumentException("Current tier must be at least 1", nameof(currentTier));
+        if (upgradeLevel < 0)
+            throw new ArgumentException("Upgrade level cannot be negative", nameof(upgradeLevel));
+
         InstanceId = instanceId;
         DefinitionId = definitionId;
         CurrentTier = currentTier;

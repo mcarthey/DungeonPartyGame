@@ -6,9 +6,9 @@ public class GearService
 {
     private readonly Dictionary<string, GearItemDefinition> _gearDefinitions = new();
 
-    public GearService()
+    public GearService(ModManager? modManager = null)
     {
-        InitializeGearDefinitions();
+        InitializeGearDefinitions(modManager);
     }
 
     public GearItemDefinition? GetGearDefinition(string gearId)
@@ -40,7 +40,23 @@ public class GearService
         return character.GetEffectiveStats(_gearDefinitions);
     }
 
-    private void InitializeGearDefinitions()
+    private void InitializeGearDefinitions(ModManager? modManager)
+    {
+        // Load base game definitions
+        LoadBaseDefinitions();
+
+        // Load mod definitions if ModManager is provided
+        if (modManager != null)
+        {
+            var modDefinitions = modManager.LoadGearDefinitions();
+            foreach (var kvp in modDefinitions)
+            {
+                _gearDefinitions[kvp.Key] = kvp.Value;
+            }
+        }
+    }
+
+    private void LoadBaseDefinitions()
     {
         // Weapons
         _gearDefinitions["iron_sword"] = new GearItemDefinition("iron_sword", "Iron Sword", GearSlot.Weapon, GearRarity.Common, 1, attackBonus: 5);

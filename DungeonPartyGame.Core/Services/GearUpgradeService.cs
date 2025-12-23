@@ -13,20 +13,50 @@ public class GearUpgradeService
 
     public bool CanUpgrade(GearInstance gear, Inventory inventory)
     {
-        // Simple upgrade cost: 10 gold per upgrade level
-        int cost = gear.UpgradeLevel * 10 + 10;
-        return inventory.Gold >= cost;
+        if (IsMaxLevel(gear))
+            return false;
+
+        var definition = _gearService.GetGearDefinition(gear.DefinitionId);
+        if (definition == null)
+            return false;
+
+        // Upgrade cost increases with level and rarity
+        int rarityMultiplier = (int)definition.Rarity + 1; // Common = 1, Uncommon = 2, etc.
+        int baseCost = definition.BaseTier * 10 * rarityMultiplier;
+        int upgradeCost = baseCost * (gear.UpgradeLevel + 1);
+
+        return inventory.UpgradeShards >= upgradeCost;
     }
 
     public bool Upgrade(GearInstance gear, Inventory inventory)
     {
-        if (!CanUpgrade(gear, inventory)) return false;
+        if (!CanUpgrade(gear, inventory))
+            return false;
 
-        int cost = gear.UpgradeLevel * 10 + 10;
-        if (!inventory.SpendGold(cost)) return false;
+        var definition = _gearService.GetGearDefinition(gear.DefinitionId);
+        if (definition == null)
+            return false;
+
+        int rarityMultiplier = (int)definition.Rarity + 1; // Common = 1, Uncommon = 2, etc.
+        int baseCost = definition.BaseTier * 10 * rarityMultiplier;
+        int upgradeCost = baseCost * (gear.UpgradeLevel + 1);
+
+        if (!inventory.SpendUpgradeShards(upgradeCost))
+            return false;
 
         gear.UpgradeLevel++;
         return true;
+    }
+
+    public bool IsMaxLevel(GearInstance gear)
+    {
+        var definition = _gearService.GetGearDefinition(gear.DefinitionId);
+        if (definition == null)
+            return true;
+
+        // Max upgrade level based on rarity
+        int maxLevel = ((int)definition.Rarity + 1) * 5; // Common: 5, Uncommon: 10, Rare: 15, etc.
+        return gear.UpgradeLevel >= maxLevel;
     }
 
     public bool CanPromoteTier(GearInstance gear, Inventory inventory)
@@ -70,7 +100,13 @@ public class GearUpgradeService
 
     public int GetUpgradeCost(GearInstance gear)
     {
-        return gear.UpgradeLevel * 10 + 10;
+        var definition = _gearService.GetGearDefinition(gear.DefinitionId);
+        if (definition == null)
+            return int.MaxValue;
+
+        int rarityMultiplier = (int)definition.Rarity + 1; // Common = 1, Uncommon = 2, etc.
+        int baseCost = definition.BaseTier * 10 * rarityMultiplier;
+        return baseCost * (gear.UpgradeLevel + 1);
     }
 
     public int GetPromotionCost(GearInstance gear)

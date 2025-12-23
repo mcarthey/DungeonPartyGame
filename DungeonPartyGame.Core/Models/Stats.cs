@@ -13,6 +13,11 @@ public class Stats
 
     public Stats(int strength, int dexterity, int constitution, int maxHealth)
     {
+        if (strength < 0) throw new ArgumentException("Strength cannot be negative", nameof(strength));
+        if (dexterity < 0) throw new ArgumentException("Dexterity cannot be negative", nameof(dexterity));
+        if (constitution < 0) throw new ArgumentException("Constitution cannot be negative", nameof(constitution));
+        if (maxHealth <= 0) throw new ArgumentException("Max health must be positive", nameof(maxHealth));
+
         Strength = strength;
         Dexterity = dexterity;
         Constitution = constitution;
