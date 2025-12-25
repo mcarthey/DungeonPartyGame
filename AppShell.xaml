@@ -6,6 +6,6 @@
     x:Class="DungeonPartyGame.AppShell">
 
     <ShellContent
-        Title="Dungeon Party"
-        ContentTemplate="{DataTemplate pages:MainPage}" />
+        Title="Dungeon Party Hub"
+        ContentTemplate="{DataTemplate pages:HubPage}" />
 </Shell>
