@@ -3,6 +3,7 @@ using System.Windows.Input;
 using DungeonPartyGame.Core.Models;
 using DungeonPartyGame.Core.Services;
 using DungeonPartyGame.UI.Pages;
+using DungeonPartyGame.UI.Controls;
 
 namespace DungeonPartyGame.UI.ViewModels;
 
@@ -17,6 +18,7 @@ public class MainViewModel : BindableObject
     private Character? _rogue;
     private CombatSession? _currentSession;
     private string _combatLog = string.Empty;
+    private CombatCanvas? _combatCanvas;
 
     public string CombatLog
     {
@@ -43,6 +45,11 @@ public class MainViewModel : BindableObject
         NextRoundCommand = new Command(ExecuteNextRound, () => _currentSession != null && !_currentSession.IsComplete);
         NavigateToPartyCommand = new Command(async () => await NavigateToParty());
         GrantXpCommand = new Command(GrantXp);
+    }
+
+    public void SetCombatCanvas(CombatCanvas canvas)
+    {
+        _combatCanvas = canvas;
     }
 
     private void CreateCharacters()
@@ -90,6 +97,11 @@ public class MainViewModel : BindableObject
         var initiativeWinner = _currentSession.CurrentAttacker.Name;
         CombatLog = $"Combat begins!\n{initiativeWinner} wins initiative.\n\n";
 
+        // Initialize combat canvas
+        _combatCanvas?.ClearCharacters();
+        _combatCanvas?.AddCharacter(_fighter.Name, 100, 125, _fighter.Stats.CurrentHealth, _fighter.Stats.MaxHealth);
+        _combatCanvas?.AddCharacter(_rogue.Name, 300, 125, _rogue.Stats.CurrentHealth, _rogue.Stats.MaxHealth);
+
         NextRoundCommand.ChangeCanExecute();
     }
 
@@ -101,6 +113,21 @@ public class MainViewModel : BindableObject
         }
 
         var result = _combatEngine.ExecuteRound(_currentSession);
+
+        // Trigger combat animations
+        foreach (var targetResult in result.Targets)
+        {
+            _combatCanvas?.PlayAttackAnimation(
+                result.Actor.Name,
+                targetResult.Target.Name,
+                targetResult.Damage,
+                isCritical: false, // Can enhance this later with critical hit detection
+                isMiss: targetResult.Damage == 0
+            );
+
+            // Update health bars
+            _combatCanvas?.UpdateCharacterHealth(targetResult.Target.Name, targetResult.Target.Stats.CurrentHealth);
+        }
 
         var sb = new StringBuilder(CombatLog);
         sb.AppendLine(result.LogMessage);
