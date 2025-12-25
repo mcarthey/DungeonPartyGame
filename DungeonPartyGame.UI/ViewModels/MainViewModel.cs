@@ -97,10 +97,12 @@ public class MainViewModel : BindableObject
         var initiativeWinner = _currentSession.CurrentAttacker.Name;
         CombatLog = $"Combat begins!\n{initiativeWinner} wins initiative.\n\n";
 
-        // Initialize combat canvas
+        // Initialize combat canvas with role-based sprites
         _combatCanvas?.ClearCharacters();
-        _combatCanvas?.AddCharacter(_fighter.Name, 100, 125, _fighter.Stats.CurrentHealth, _fighter.Stats.MaxHealth);
-        _combatCanvas?.AddCharacter(_rogue.Name, 300, 125, _rogue.Stats.CurrentHealth, _rogue.Stats.MaxHealth);
+        _combatCanvas?.AddCharacter(_fighter.Name, 100, 125, _fighter.Stats.CurrentHealth, _fighter.Stats.MaxHealth,
+            Models.CharacterRole.Fighter);
+        _combatCanvas?.AddCharacter(_rogue.Name, 300, 125, _rogue.Stats.CurrentHealth, _rogue.Stats.MaxHealth,
+            Models.CharacterRole.Rogue);
 
         NextRoundCommand.ChangeCanExecute();
     }
