@@ -2,18 +2,19 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'claude/**' ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    - name: Setup .NET
+    - name: Setup .NET 10
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
@@ -22,10 +23,42 @@ jobs:
       run: dotnet workload install maui --skip-manifest-update
 
     - name: Restore dependencies
-      run: dotnet restore DungeonPartyGame.csproj --runtime win-x64
+      run: dotnet restore DungeonPartyGame.sln
 
-    - name: Build
-      run: dotnet build --no-restore --configuration Release DungeonPartyGame.csproj --runtime win-x64
+    - name: Build Core project
+      run: dotnet build DungeonPartyGame.Core/DungeonPartyGame.Core.csproj --no-restore --configuration Release
 
-    - name: Test
-      run: dotnet test --no-build --verbosity normal --configuration Release
+    - name: Build UI project
+      run: dotnet build DungeonPartyGame.UI/DungeonPartyGame.UI.csproj --no-restore --configuration Release
+
+    - name: Build Tests project
+      run: dotnet build DungeonPartyGame.Tests/DungeonPartyGame.Tests.csproj --no-restore --configuration Release
+
+    - name: Build Main project
+      run: dotnet build DungeonPartyGame.csproj --no-restore --configuration Release --runtime win-x64
+
+    - name: Run tests
+      run: dotnet test DungeonPartyGame.Tests/DungeonPartyGame.Tests.csproj --no-build --verbosity normal --configuration Release --logger "trx;LogFileName=test-results.trx"
+
+    - name: Run tests with coverage
+      run: dotnet test DungeonPartyGame.Tests/DungeonPartyGame.Tests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: '**/test-results.trx'
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-reports
+        path: './coverage/**/*.xml'
+
+    - name: Test Summary
+      run: |
+        echo "Build completed successfully!"
+        echo "All tests passed!"
+        echo "Code coverage collected!"
