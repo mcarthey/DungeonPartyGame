@@ -22,7 +22,8 @@ public partial class MainPage : ContentPage
             if (vm is MainViewModel mainViewModel)
             {
                 mainViewModel.NavigateToPartyRequested += OnNavigateToPartyRequested;
-                _logger.LogInformation("NavigateToPartyRequested event handler attached");
+                mainViewModel.SetCombatCanvas(CombatCanvas);
+                _logger.LogInformation("NavigateToPartyRequested event handler attached and CombatCanvas set");
             }
             else
             {

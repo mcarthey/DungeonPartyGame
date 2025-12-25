@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="DungeonPartyGame.UI.Pages.HubPage"
+    Title="Dungeon Party Hub"
+    BackgroundColor="#1E1E2E">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <!-- Header Section -->
+            <Frame BackgroundColor="#2C2C3E" CornerRadius="15" Padding="20" HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="🏰 Dungeon Party Hub 🏰"
+                           FontSize="28"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           TextColor="White" />
+
+                    <!-- Player Info -->
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="{Binding PlayerName}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="White" />
+                            <Label Text="{Binding PlayerLevel, StringFormat='Level {0}'}"
+                                   FontSize="16"
+                                   TextColor="#B0B0C0" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="5" HorizontalOptions="End">
+                            <Label Text="{Binding GoldDisplay}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="#FFD700" />
+                            <Label Text="{Binding GemsDisplay}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="#00CED1" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <!-- XP Progress Bar -->
+                    <VerticalStackLayout Margin="0,10,0,0">
+                        <Label Text="⭐ Experience Progress"
+                               FontSize="14"
+                               TextColor="#B0B0C0"
+                               Margin="0,0,0,5" />
+                        <ProgressBar Progress="{Binding XpProgress}"
+                                     ProgressColor="#4CAF50"
+                                     HeightRequest="12"
+                                     CornerRadius="6" />
+                        <Label Text="{Binding CurrentXp, StringFormat='{0:N0} XP'}"
+                               FontSize="12"
+                               TextColor="#B0B0C0"
+                               HorizontalOptions="End" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Daily Reward Banner -->
+            <Button Text="{Binding DailyRewardText}"
+                    Command="{Binding ClaimDailyRewardCommand}"
+                    BackgroundColor="#9C27B0"
+                    TextColor="White"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    HeightRequest="50"
+                    IsVisible="{Binding HasDailyReward}" />
+
+            <!-- Navigation Tiles -->
+            <Label Text="🎮 Game Features"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   Margin="0,10,0,0" />
+
+            <!-- First Row -->
+            <Grid ColumnDefinitions="*,*" RowDefinitions="120" ColumnSpacing="15">
+                <!-- Combat Tile -->
+                <Frame Grid.Column="0"
+                       BackgroundColor="#E74C3C"
+                       CornerRadius="15"
+                       Padding="0"
+                       HasShadow="True">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToCombatCommand}" />
+                    </Frame.GestureRecognizers>
+                    <VerticalStackLayout Padding="15" Spacing="5" VerticalOptions="Center">
+                        <Label Text="⚔️"
+                               FontSize="48"
+                               HorizontalOptions="Center" />
+                        <Label Text="Combat"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"
+                               TextColor="White" />
+                        <Label Text="Battle monsters"
+                               FontSize="12"
+                               HorizontalOptions="Center"
+                               TextColor="#FFFFFFCC" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Party Tile -->
+                <Frame Grid.Column="1"
+                       BackgroundColor="#3498DB"
+                       CornerRadius="15"
+                       Padding="0"
+                       HasShadow="True">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToPartyCommand}" />
+                    </Frame.GestureRecognizers>
+                    <VerticalStackLayout Padding="15" Spacing="5" VerticalOptions="Center">
+                        <Label Text="👥"
+                               FontSize="48"
+                               HorizontalOptions="Center" />
+                        <Label Text="Party"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"
+                               TextColor="White" />
+                        <Label Text="Manage heroes"
+                               FontSize="12"
+                               HorizontalOptions="Center"
+                               TextColor="#FFFFFFCC" />
+                    </VerticalStackLayout>
+                </Frame>
+            </Grid>
+
+            <!-- Second Row -->
+            <Grid ColumnDefinitions="*,*" RowDefinitions="120" ColumnSpacing="15">
+                <!-- Skills Tile -->
+                <Frame Grid.Column="0"
+                       BackgroundColor="#9B59B6"
+                       CornerRadius="15"
+                       Padding="0"
+                       HasShadow="True">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToSkillsCommand}" />
+                    </Frame.GestureRecognizers>
+                    <VerticalStackLayout Padding="15" Spacing="5" VerticalOptions="Center">
+                        <Label Text="🎯"
+                               FontSize="48"
+                               HorizontalOptions="Center" />
+                        <Label Text="Skills"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"
+                               TextColor="White" />
+                        <Label Text="Unlock abilities"
+                               FontSize="12"
+                               HorizontalOptions="Center"
+                               TextColor="#FFFFFFCC" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Gear Tile -->
+                <Frame Grid.Column="1"
+                       BackgroundColor="#F39C12"
+                       CornerRadius="15"
+                       Padding="0"
+                       HasShadow="True">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToGearCommand}" />
+                    </Frame.GestureRecognizers>
+                    <VerticalStackLayout Padding="15" Spacing="5" VerticalOptions="Center">
+                        <Label Text="🛡️"
+                               FontSize="48"
+                               HorizontalOptions="Center" />
+                        <Label Text="Gear"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"
+                               TextColor="White" />
+                        <Label Text="Equip items"
+                               FontSize="12"
+                               HorizontalOptions="Center"
+                               TextColor="#FFFFFFCC" />
+                    </VerticalStackLayout>
+                </Frame>
+            </Grid>
+
+            <!-- Third Row - Monetization Features -->
+            <Grid ColumnDefinitions="*,*" RowDefinitions="120" ColumnSpacing="15">
+                <!-- Store Tile -->
+                <Frame Grid.Column="0"
+                       BackgroundColor="#16A085"
+                       CornerRadius="15"
+                       Padding="0"
+                       HasShadow="True">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToStoreCommand}" />
+                    </Frame.GestureRecognizers>
+                    <VerticalStackLayout Padding="15" Spacing="5" VerticalOptions="Center">
+                        <Label Text="🏪"
+                               FontSize="48"
+                               HorizontalOptions="Center" />
+                        <Label Text="Store"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"
+                               TextColor="White" />
+                        <Label Text="Buy items"
+                               FontSize="12"
+                               HorizontalOptions="Center"
+                               TextColor="#FFFFFFCC" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Events Tile -->
+                <Frame Grid.Column="1"
+                       BackgroundColor="#E67E22"
+                       CornerRadius="15"
+                       Padding="0"
+                       HasShadow="True">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToEventsCommand}" />
+                    </Frame.GestureRecognizers>
+                    <Grid>
+                        <VerticalStackLayout Padding="15" Spacing="5" VerticalOptions="Center">
+                            <Label Text="📅"
+                                   FontSize="48"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Events"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center"
+                                   TextColor="White" />
+                            <Label Text="Complete quests"
+                                   FontSize="12"
+                                   HorizontalOptions="Center"
+                                   TextColor="#FFFFFFCC" />
+                        </VerticalStackLayout>
+
+                        <!-- Notification Badge -->
+                        <Frame WidthRequest="30"
+                               HeightRequest="30"
+                               CornerRadius="15"
+                               BackgroundColor="#FF4444"
+                               Padding="0"
+                               HorizontalOptions="End"
+                               VerticalOptions="Start"
+                               Margin="10"
+                               IsVisible="{Binding EventBadgeVisible}">
+                            <Label Text="{Binding ActiveEventsCount}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                        </Frame>
+                    </Grid>
+                </Frame>
+            </Grid>
+
+            <!-- Quick Stats/Info -->
+            <Frame BackgroundColor="#2C2C3E" CornerRadius="15" Padding="15" HasShadow="True" Margin="0,10,0,20">
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="📊 Quick Stats"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="White" />
+                    <Label Text="Tap any tile above to get started!"
+                           FontSize="14"
+                           TextColor="#B0B0C0" />
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
