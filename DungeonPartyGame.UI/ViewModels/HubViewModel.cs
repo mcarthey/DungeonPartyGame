@@ -1,12 +1,21 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Windows.Input;
 using DungeonPartyGame.Core.Services;
 using DungeonPartyGame.Core.Models;
 using Microsoft.Extensions.Logging;
 
 namespace DungeonPartyGame.UI.ViewModels;
 
-public class HubViewModel : BindableObject
+public class HubViewModel : INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
     private readonly CurrencyService _currencyService;
     private readonly EventService _eventService;
     private readonly DailyRewardService _dailyRewardService;

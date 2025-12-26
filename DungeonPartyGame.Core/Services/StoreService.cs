@@ -94,6 +94,7 @@ public class StoreService
             Type = StoreItemType.Consumable,
             Rarity = ItemRarity.Common,
             Price = new List<Currency> { new Currency(CurrencyType.Gold, 50) },
+            UpgradeShards = 5,
             IconEmoji = "❤️"
         });
 

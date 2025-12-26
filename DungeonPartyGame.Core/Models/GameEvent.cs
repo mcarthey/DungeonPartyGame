@@ -170,10 +170,10 @@ public class LoginStreak
 
     public DailyReward? GetTodaysReward()
     {
-        if (RewardSchedule.Count == 0)
+        if (RewardSchedule.Count == 0 || CurrentStreak <= 0)
             return null;
 
-        // Cycle through reward schedule
+        // Cycle through reward schedule (1-indexed streak to 0-indexed array)
         var dayIndex = (CurrentStreak - 1) % RewardSchedule.Count;
         return RewardSchedule[dayIndex];
     }

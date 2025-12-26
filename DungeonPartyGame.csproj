@@ -77,11 +77,18 @@
 		<Compile Remove="**\*.AssemblyAttributes.cs" />
 	</ItemGroup>
 
-	<!-- Exclude Tests directory from main project build -->
+	<!-- Exclude sub-project directories from main project build -->
 	<ItemGroup>
 		<Compile Remove="**/DungeonPartyGame.Tests/**" />
+		<Compile Remove="**/DungeonPartyGame.Core/**" />
+		<Compile Remove="**/DungeonPartyGame.UI/**" />
 		<EmbeddedResource Remove="**/DungeonPartyGame.Tests/**" />
+		<EmbeddedResource Remove="**/DungeonPartyGame.Core/**" />
+		<EmbeddedResource Remove="**/DungeonPartyGame.UI/**" />
 		<None Remove="**/DungeonPartyGame.Tests/**" />
+		<None Remove="**/DungeonPartyGame.Core/**" />
+		<None Remove="**/DungeonPartyGame.UI/**" />
+		<MauiXaml Remove="**/DungeonPartyGame.UI/**" />
 	</ItemGroup>
 
 </Project>
