@@ -82,7 +82,17 @@ public partial class HubPage : ContentPage
         try
         {
             _logger.LogInformation("Navigating to Skills page");
-            var skillTreePage = new SkillTreePage(_loggerFactory);
+
+            // Get the first character from the party
+            var character = _gameSession.Party.FirstOrDefault();
+            if (character == null)
+            {
+                await DisplayAlert("Error", "No characters in party!", "OK");
+                return;
+            }
+
+            var viewModel = new SkillTreeViewModel(character, _loggerFactory);
+            var skillTreePage = new SkillTreePage(viewModel, _loggerFactory);
             await Navigation.PushAsync(skillTreePage);
         }
         catch (Exception ex)
@@ -97,7 +107,17 @@ public partial class HubPage : ContentPage
         try
         {
             _logger.LogInformation("Navigating to Gear page");
-            var gearPage = new GearPage(_loggerFactory);
+
+            // Get the first character from the party
+            var character = _gameSession.Party.FirstOrDefault();
+            if (character == null)
+            {
+                await DisplayAlert("Error", "No characters in party!", "OK");
+                return;
+            }
+
+            var viewModel = new GearViewModel(character, _loggerFactory);
+            var gearPage = new GearPage(viewModel, _loggerFactory);
             await Navigation.PushAsync(gearPage);
         }
         catch (Exception ex)
