@@ -54,3 +54,6 @@ project.lock.json
 
 # Generated or temporary files
 *.spritefont
+
+# Problematic or reserved names (Windows)
+nul
