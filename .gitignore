@@ -35,3 +35,22 @@ packages/
 
 # MAUI specific
 *.xaml.cs.bak
+
+# Additional .NET / MonoGame / project ignores
+.vs/
+*.sln.docstates
+TestResults/
+artifacts/
+out/
+*.nupkg
+.packages/
+coverage-report/
+coveragereport/
+coverage*.xml
+*.xnb
+*.mgcb.user
+Content/Content.mgcb.*
+project.lock.json
+
+# Generated or temporary files
+*.spritefont
