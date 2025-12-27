@@ -57,6 +57,8 @@ public class DungeonPartyGameMain : Game
 
         // Core services
         services.AddSingleton<DiceService>();
+        services.AddSingleton<GearService>();
+        services.AddSingleton<ISkillSelector, DefaultSkillSelector>();
         services.AddSingleton<CombatEngine>();
         services.AddSingleton<ProgressionService>();
         services.AddSingleton<CurrencyService>();
@@ -133,7 +135,7 @@ public class DungeonPartyGameMain : Game
         _screenManager.ChangeScreen(screen);
     }
 
-    public void PushScreen(Screen screen)
+    public virtual void PushScreen(Screen screen)
     {
         _screenManager.PushScreen(screen);
     }

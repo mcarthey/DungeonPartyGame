@@ -28,6 +28,8 @@
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.2.1105" />
     <!-- When building with the real MonoGame package, exclude local stub implementation -->
     <Compile Remove="Compat\MonogameStubs.cs" />
+    <PackageReference Include="SpriteFontPlus" Version="0.9.2" />
+    <PackageReference Include="SpriteFontPlus.MonoGame" Version="0.7.0.22" />
   </ItemGroup>
 
   <ItemGroup>
@@ -63,9 +65,7 @@
     <Folder Include="Sprites\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <MonoGameContentReference Include="Content\Fonts\RegularFont.spritefont" />
-  </ItemGroup>
+
 
 
   <!-- Remove any AssemblyInfo files generated in obj before compile to avoid duplicate attribute errors -->

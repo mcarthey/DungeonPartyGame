@@ -5,6 +5,8 @@ using XnaColor = Microsoft.Xna.Framework.Color;
 using DungeonPartyGame.Core.Models;
 using DungeonPartyGame.Core.Services;
 using Microsoft.Extensions.Logging;
+using System.IO;
+using SpriteFontPlus;
 
 namespace DungeonPartyGame.MonoGame.Screens;
 
@@ -49,13 +51,26 @@ public class HubScreen : Screen
         // In a real game, you'd add custom fonts to Content folder
         try
         {
-            // Try to load fonts if available (RegularFont used for both title and body)
-            _titleFont = Game.Content.Load<SpriteFont>("Fonts/RegularFont");
-            _regularFont = Game.Content.Load<SpriteFont>("Fonts/RegularFont");
+            // Try to generate fonts at runtime using system TTFs (avoids content pipeline dependency)
+            var windowsFonts = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Fonts");
+            var arialPath = Path.Combine(windowsFonts, "arial.ttf");
+            if (File.Exists(arialPath))
+            {
+                var fontBytes = File.ReadAllBytes(arialPath);
+                // Create runtime SpriteFont instances (regular and title sizes)
+                var fontBakeRegular = TtfFontBaker.Bake(fontBytes, 20, 512, 512, new[] { CharacterRange.BasicLatin });
+                _regularFont = fontBakeRegular.CreateSpriteFont(GraphicsDevice);
+                var fontBakeTitle = TtfFontBaker.Bake(fontBytes, 36, 512, 512, new[] { CharacterRange.BasicLatin });
+                _titleFont = fontBakeTitle.CreateSpriteFont(GraphicsDevice);
+            }
+            else
+            {
+                _logger.LogWarning("System font 'arial.ttf' not found; using fallback rendering");
+            }
         }
-        catch
+        catch (Exception ex)
         {
-            _logger.LogWarning("Custom fonts not found, using fallback rendering");
+            _logger.LogWarning(ex, "Runtime font generation failed; using fallback rendering");
         }
 
         // Set up navigation buttons

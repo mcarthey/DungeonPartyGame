@@ -5,6 +5,8 @@ using XnaColor = Microsoft.Xna.Framework.Color;
 using DungeonPartyGame.Core.Models;
 using DungeonPartyGame.Core.Services;
 using Microsoft.Extensions.Logging;
+using System.IO;
+using SpriteFontPlus;
 
 namespace DungeonPartyGame.MonoGame.Screens;
 
@@ -22,18 +24,81 @@ public class CombatScreen : Screen
 
     private Texture2D? _whitePixel;
     private SpriteFont? _regularFont;
+    private SpriteFont? _titleFont;
+    private SpriteFont? _uiSmall;
+    private SpriteFont? _uiMedium;
 
     private readonly List<CharacterSprite> _heroSprites = new();
     private readonly List<CharacterSprite> _enemySprites = new();
     private readonly List<DamageNumber> _damageNumbers = new();
+
+    // UI state
+    private float _nextButtonPulseTime = 0f;
+    private int _previousScrollWheel = 0;
 
     private Character? _fighter;
     private Character? _rogue;
     private Character? _goblin;
 
     private string _combatLog = "";
+    private readonly List<string> _combatLogLines = new();
+    private int _combatLogScroll = 0;
+    private const int MaxCombatLogLines = 500;
     private bool _combatActive = false;
     private MouseState _previousMouseState;
+
+    private static List<string> WrapTextSimple(string text, int maxChars)
+    {
+        var result = new List<string>();
+        if (string.IsNullOrEmpty(text)) return result;
+        var words = text.Split(' ');
+        var current = "";
+        foreach (var w in words)
+        {
+            if (current.Length + w.Length + 1 <= maxChars)
+            {
+                current = string.IsNullOrEmpty(current) ? w : current + " " + w;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(current)) result.Add(current);
+                if (w.Length <= maxChars)
+                    current = w;
+                else
+                {
+                    // Break long word
+                    for (int i = 0; i < w.Length; i += maxChars)
+                    {
+                        int len = Math.Min(maxChars, w.Length - i);
+                        result.Add(w.Substring(i, len));
+                    }
+                    current = "";
+                }
+            }
+        }
+        if (!string.IsNullOrEmpty(current)) result.Add(current);
+        return result;
+    }
+
+    private void AddCombatLog(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        var lines = text.Split('\n');
+        foreach (var l in lines)
+        {
+            // Estimate characters-per-line using viewport width and a rough character width when font not available
+            int approxChars = Math.Max(20, (GraphicsDevice.Viewport.Width - 120) / 12);
+            var wrapped = WrapTextSimple(l, approxChars);
+            foreach (var w in wrapped)
+            {
+                _combatLogLines.Add(w);
+                if (_combatLogLines.Count > MaxCombatLogLines) _combatLogLines.RemoveAt(0);
+            }
+        }
+        // Auto-scroll to bottom
+        _combatLogScroll = 0;
+    }
+
 
     public CombatScreen(
         ILoggerFactory loggerFactory,
@@ -56,6 +121,48 @@ public class CombatScreen : Screen
         // Create 1x1 white pixel for drawing
         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
         _whitePixel.SetData(new[] { XnaColor.White });
+
+        // Load fonts - prefer a bundled font in Content/Fonts, otherwise fall back to system arial (avoids content pipeline requirement)
+        try
+        {
+            string bundledPath = Path.Combine(AppContext.BaseDirectory, "Content", "Fonts", "NotoSans-Regular.ttf");
+            if (File.Exists(bundledPath))
+            {
+                var fontBytes = File.ReadAllBytes(bundledPath);
+                var bakeSmall = TtfFontBaker.Bake(fontBytes, 14, 512, 512, new[] { CharacterRange.BasicLatin });
+                _uiSmall = bakeSmall.CreateSpriteFont(GraphicsDevice);
+                var bakeMed = TtfFontBaker.Bake(fontBytes, 18, 512, 512, new[] { CharacterRange.BasicLatin });
+                _uiMedium = bakeMed.CreateSpriteFont(GraphicsDevice);
+                var bakeLarge = TtfFontBaker.Bake(fontBytes, 36, 512, 512, new[] { CharacterRange.BasicLatin });
+                _titleFont = bakeLarge.CreateSpriteFont(GraphicsDevice);
+                _regularFont = _uiMedium;
+                _logger.LogInformation("Loaded bundled font from Content/Fonts/NotoSans-Regular.ttf");
+            }
+            else
+            {
+                var windowsFonts = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Fonts");
+                var arialPath = Path.Combine(windowsFonts, "arial.ttf");
+                if (File.Exists(arialPath))
+                {
+                    var fontBytes = File.ReadAllBytes(arialPath);
+                    var fontBakeRegular = TtfFontBaker.Bake(fontBytes, 18, 512, 512, new[] { CharacterRange.BasicLatin });
+                    _regularFont = fontBakeRegular.CreateSpriteFont(GraphicsDevice);
+                    var fontBakeTitle = TtfFontBaker.Bake(fontBytes, 36, 512, 512, new[] { CharacterRange.BasicLatin });
+                    _titleFont = fontBakeTitle.CreateSpriteFont(GraphicsDevice);
+                    var fontBakeSmall = TtfFontBaker.Bake(fontBytes, 14, 512, 512, new[] { CharacterRange.BasicLatin });
+                    _uiSmall = fontBakeSmall.CreateSpriteFont(GraphicsDevice);
+                    _uiMedium = _regularFont;
+                }
+                else
+                {
+                    _logger.LogWarning("No system font found and no bundled font present; using fallback rendering");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Runtime font generation failed; using fallback rendering");
+        }
 
         // Initialize combat
         InitializeCombat();
@@ -127,6 +234,16 @@ public class CombatScreen : Screen
             }
         }
 
+        // Update pulse for next turn button
+        if (_combatActive)
+        {
+            _nextButtonPulseTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        }
+        else
+        {
+            _nextButtonPulseTime = 0f;
+        }
+
         // Update character sprites
         foreach (var sprite in _heroSprites.Concat(_enemySprites))
         {
@@ -163,6 +280,19 @@ public class CombatScreen : Screen
             }
         }
 
+        // Mouse wheel handling for combat log scrolling
+        int wheelDelta = mouseState.ScrollWheelValue - _previousScrollWheel;
+        if (wheelDelta != 0 && _combatLogLines.Count > 0)
+        {
+            // Positive wheelDelta means scroll up (older content)
+            int lines = Math.Abs(wheelDelta) / 120; // typical mouse wheel step
+            if (wheelDelta > 0)
+                _combatLogScroll = Math.Min(Math.Max(0, _combatLogScroll + lines), Math.Max(0, _combatLogLines.Count - 1));
+            else
+                _combatLogScroll = Math.Max(0, _combatLogScroll - lines);
+        }
+
+        _previousScrollWheel = mouseState.ScrollWheelValue;
         _previousMouseState = mouseState;
     }
 
@@ -181,7 +311,7 @@ public class CombatScreen : Screen
         var result = _combatEngine.ExecuteRound(_currentSession);
 
         // Use summary text for the log
-        _combatLog = result.SummaryText ?? string.Empty;
+        if (!string.IsNullOrEmpty(result.SummaryText)) AddCombatLog(result.SummaryText);
 
         // Create damage number visuals from targets
         foreach (var targetResult in result.Targets)
@@ -225,16 +355,37 @@ public class CombatScreen : Screen
         DrawRectangle(new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
             new XnaColor(40, 35, 30));
 
+        // Compute layout
+        float titleScale = MathHelper.Clamp(GraphicsDevice.Viewport.Width / 800f * 1.4f, 1.0f, 1.6f);
+        int titleY = 30;
+        int arenaTop = titleY + (int)(titleScale * 30) + 10;
+        int arenaHeight = Math.Max(300, GraphicsDevice.Viewport.Height - arenaTop - 220);
+
         // Draw combat arena
-        DrawRectangle(new Rectangle(50, 150, GraphicsDevice.Viewport.Width - 100, 400),
+        DrawRectangle(new Rectangle(50, arenaTop, GraphicsDevice.Viewport.Width - 100, arenaHeight),
             new XnaColor(60, 55, 50));
 
-        // Draw header
+        // Draw header (scaled and repositioned to avoid clipping)
         DrawText("⚔️ COMBAT ⚔️",
-            new Vector2(GraphicsDevice.Viewport.Width / 2, 50),
-            XnaColor.Gold, 2.0f, true);
+            new Vector2(GraphicsDevice.Viewport.Width / 2, titleY),
+            XnaColor.Gold, titleScale, true);
 
         // Draw character sprites
+        // Highlight the active attacker
+        var active = _currentSession?.CurrentAttacker;
+        CharacterSprite? activeSprite = null;
+        foreach (var sprite in _heroSprites.Concat(_enemySprites))
+        {
+            if (sprite.Character == active) activeSprite = sprite;
+        }
+
+        if (activeSprite != null)
+        {
+            var b = activeSprite.GetBounds();
+            var outline = new Rectangle((int)b.X - 6, (int)b.Y - 6, (int)b.Width + 12, (int)b.Height + 12);
+            DrawRectangle(outline, XnaColor.Gold * 0.25f);
+        }
+
         foreach (var sprite in _heroSprites)
         {
             sprite.Draw(SpriteBatch, _whitePixel!);
@@ -248,7 +399,13 @@ public class CombatScreen : Screen
         // Draw damage numbers
         foreach (var dmg in _damageNumbers)
         {
-            DrawText(dmg.Text, dmg.Position, dmg.Color, 1.5f, true);
+            DrawText(dmg.Text, dmg.Position, dmg.Color, dmg.Scale, true);
+        }
+
+        // Draw unit labels and numeric HP
+        foreach (var sprite in _heroSprites.Concat(_enemySprites))
+        {
+            DrawUnitLabel(sprite);
         }
 
         // Draw combat log
@@ -262,11 +419,35 @@ public class CombatScreen : Screen
 
     private void DrawCombatLog()
     {
-        var logRect = new Rectangle(50, 580, GraphicsDevice.Viewport.Width - 100, 100);
+        var logRect = new Rectangle(50, GraphicsDevice.Viewport.Height - 160, GraphicsDevice.Viewport.Width - 100, 120);
         DrawRectangle(logRect, new XnaColor(20, 20, 30));
         DrawRectangleBorder(logRect, XnaColor.Gray, 2);
 
-        DrawText(_combatLog, new Vector2(60, 590), XnaColor.White, 0.9f);
+        float lineHeight = 18f;
+        if (_regularFont != null) lineHeight = _regularFont.LineSpacing * 0.9f;
+        int maxLines = Math.Max(1, (int)(logRect.Height / lineHeight) - 1);
+
+        int total = _combatLogLines.Count;
+        int start = Math.Max(0, total - maxLines - _combatLogScroll);
+        int y = logRect.Y + 10;
+        for (int i = start; i < total && i < start + maxLines; i++)
+        {
+            DrawText(_combatLogLines[i], new Vector2(logRect.X + 10, y), XnaColor.White, 0.9f, false);
+            y += (int)lineHeight;
+        }
+    }
+
+    private void DrawUnitLabel(CharacterSprite sprite)
+    {
+        // Name
+        var namePos = new Vector2(sprite.Position.X, sprite.Position.Y - 80);
+        DrawText(sprite.Character.Name, namePos, XnaColor.White, 0.9f, true);
+
+        // HP text
+        var barPos = sprite.GetHealthBarPosition();
+        int barWidth = 60;
+        var hpText = $"HP: {sprite.Character.Stats.CurrentHealth}/{sprite.Character.Stats.MaxHealth}";
+        DrawText(hpText, new Vector2(barPos.X + barWidth + 8, barPos.Y - 2), XnaColor.White, 0.9f, false);
     }
 
     private void DrawButtons()
@@ -274,21 +455,25 @@ public class CombatScreen : Screen
         var mouseState = Mouse.GetState();
         var mousePoint = new Point(mouseState.X, mouseState.Y);
 
-        // Next Turn button
+        // Next Turn button (larger + pulse when active)
+        int btnW = 260;
+        int btnH = 60;
         var nextTurnButton = new Rectangle(
-            GraphicsDevice.Viewport.Width / 2 - 100,
-            GraphicsDevice.Viewport.Height - 100,
-            200, 50);
+            GraphicsDevice.Viewport.Width / 2 - btnW / 2,
+            GraphicsDevice.Viewport.Height - 110,
+            btnW, btnH);
 
         bool nextTurnHovered = nextTurnButton.Contains(mousePoint);
-        XnaColor nextTurnColor = _combatActive
-            ? (nextTurnHovered ? XnaColor.LightGreen : XnaColor.Green)
-            : XnaColor.Gray;
+        float pulse = _combatActive ? (0.9f + 0.1f * (float)(Math.Sin(_nextButtonPulseTime * 3.0f) + 1.0) / 2.0f) : 1.0f;
+        XnaColor baseGreen = _combatActive ? XnaColor.Green : XnaColor.Gray;
+        XnaColor nextTurnColor = nextTurnHovered ? XnaColor.LightGreen : baseGreen;
+        // modulate brightness via alpha-like multiplication
+        nextTurnColor = nextTurnColor * pulse;
 
         DrawRectangle(nextTurnButton, nextTurnColor);
         DrawRectangleBorder(nextTurnButton, XnaColor.White, 2);
         DrawText("Next Turn", new Vector2(nextTurnButton.Center.X, nextTurnButton.Center.Y),
-            XnaColor.White, 1.0f, true);
+            XnaColor.White, 1.1f * pulse, true);
 
         // Back button
         var backButton = new Rectangle(50, GraphicsDevice.Viewport.Height - 100, 150, 50);
@@ -321,10 +506,25 @@ public class CombatScreen : Screen
 
     private void DrawText(string text, Vector2 position, XnaColor color, float scale = 1.0f, bool centered = false)
     {
-        if (_regularFont != null)
+        // Prefer a title font for large text, otherwise use the regular font if available
+        SpriteFont? fontToUse = null;
+        if (scale >= 2.0f && _titleFont != null)
         {
-            Vector2 origin = centered ? _regularFont.MeasureString(text) / 2 : Vector2.Zero;
-            SpriteBatch.DrawString(_regularFont, text, position, color, 0f, origin, scale, SpriteEffects.None, 0);
+            fontToUse = _titleFont;
+        }
+        else if (_regularFont != null)
+        {
+            fontToUse = _regularFont;
+        }
+        else if (_titleFont != null)
+        {
+            fontToUse = _titleFont;
+        }
+
+        if (fontToUse != null)
+        {
+            Vector2 origin = centered ? fontToUse.MeasureString(text) / 2 : Vector2.Zero;
+            SpriteBatch.DrawString(fontToUse, text, position, color, 0f, origin, scale, SpriteEffects.None, 0);
         }
         else
         {
@@ -411,12 +611,31 @@ public class CombatScreen : Screen
 
             // Draw health bar
             DrawHealthBar(spriteBatch, whitePixel, drawPos);
-
-            // Draw name (fallback rendering)
-            var nameRect = new Rectangle((int)drawPos.X - 40, (int)drawPos.Y - 80, 80, 20);
-            spriteBatch.Draw(whitePixel, nameRect, XnaColor.Black * 0.7f);
         }
 
+        public Vector2 GetHealthBarPosition()
+        {
+            int barWidth = 60;
+            int barHeight = 12;
+            return new Vector2(Position.X - barWidth / 2, Position.Y + 40);
+        }
+
+        public Rectangle GetBounds()
+        {
+            switch (Type)
+            {
+                case CharacterSpriteType.Fighter:
+                    return new Rectangle((int)Position.X - 30, (int)Position.Y - 40, 60, 80);
+                case CharacterSpriteType.Rogue:
+                    return new Rectangle((int)Position.X - 20, (int)Position.Y - 36, 40, 72);
+                case CharacterSpriteType.Goblin:
+                    return new Rectangle((int)Position.X - 22, (int)Position.Y - 30, 44, 60);
+                default:
+                    return new Rectangle((int)Position.X - 20, (int)Position.Y - 30, 40, 60);
+            }
+        }
+
+        
         private void DrawFighter(SpriteBatch sb, Texture2D pixel, Vector2 pos, XnaColor tint)
         {
             // Body
@@ -457,7 +676,7 @@ public class CombatScreen : Screen
         private void DrawHealthBar(SpriteBatch sb, Texture2D pixel, Vector2 pos)
         {
             int barWidth = 60;
-            int barHeight = 8;
+            int barHeight = 12;
             Vector2 barPos = new Vector2(pos.X - barWidth / 2, pos.Y + 40);
 
             // Background
@@ -465,16 +684,23 @@ public class CombatScreen : Screen
                 XnaColor.DarkRed);
 
             // Health
-            float healthPercent = (float)Character.Stats.CurrentHealth / Character.Stats.MaxHealth;
+            float healthPercent = (float)Character.Stats.CurrentHealth / Math.Max(1, Character.Stats.MaxHealth);
             int healthWidth = (int)(barWidth * healthPercent);
-            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, healthWidth, barHeight),
+            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, Math.Max(1, healthWidth), barHeight),
                 XnaColor.LimeGreen);
 
-            // Border
-            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, barWidth, 1), XnaColor.White);
-            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y + barHeight, barWidth, 1), XnaColor.White);
-            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, 1, barHeight), XnaColor.White);
-            sb.Draw(pixel, new Rectangle((int)barPos.X + barWidth, (int)barPos.Y, 1, barHeight), XnaColor.White);
+            // Border (thicker)
+            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, barWidth, 2), XnaColor.White);
+            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y + barHeight - 2, barWidth, 2), XnaColor.White);
+            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, 2, barHeight), XnaColor.White);
+            sb.Draw(pixel, new Rectangle((int)barPos.X + barWidth - 2, (int)barPos.Y, 2, barHeight), XnaColor.White);
+
+            // Flash edge when hit
+            if (_hitFlashTime > 0)
+            {
+                int flashW = Math.Min(barWidth, healthWidth + 6);
+                sb.Draw(pixel, new Rectangle((int)barPos.X + Math.Max(0, healthWidth - 2), (int)barPos.Y - 2, 6, barHeight + 4), XnaColor.Yellow);
+            }
         }
     }
 
@@ -484,6 +710,7 @@ public class CombatScreen : Screen
         public Vector2 Position { get; private set; }
         public XnaColor Color { get; }
         public float Lifetime { get; private set; }
+        public float Scale { get; private set; }
 
         public DamageNumber(string text, Vector2 position, XnaColor color)
         {
@@ -491,12 +718,17 @@ public class CombatScreen : Screen
             Position = position + new Vector2(0, -30);
             Color = color;
             Lifetime = 0;
+            Scale = 1.6f;
         }
 
         public void Update(float deltaTime)
         {
             Lifetime += deltaTime;
             Position += new Vector2(0, -30 * deltaTime); // Float upward
+            // Shrink scale over first 1.0s, then settle
+            float t = MathF.Min(1.0f, Lifetime / 0.9f);
+            // MathF.Lerp isn't available on all target frameworks; use a simple linear interpolation.
+            Scale = 1.6f + (0.95f - 1.6f) * t;
         }
     }
 }
