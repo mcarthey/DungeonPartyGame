@@ -6,7 +6,9 @@ using DungeonPartyGame.Core.Models;
 using DungeonPartyGame.Core.Services;
 using Microsoft.Extensions.Logging;
 using System.IO;
+#if NET8_0_WINDOWS
 using SpriteFontPlus;
+#endif
 
 namespace DungeonPartyGame.MonoGame.Screens;
 
@@ -47,6 +49,7 @@ public class HubScreen : Screen
         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
         _whitePixel.SetData(new[] { XnaColor.White });
 
+#if NET8_0_WINDOWS
         // Load fonts - using built-in MonoGame font for now
         // In a real game, you'd add custom fonts to Content folder
         try
@@ -72,6 +75,9 @@ public class HubScreen : Screen
         {
             _logger.LogWarning(ex, "Runtime font generation failed; using fallback rendering");
         }
+#else
+        _logger.LogWarning("Runtime font generation (SpriteFontPlus) not available on this target; using fallback rendering");
+#endif
 
         // Set up navigation buttons
         int centerX = GraphicsDevice.Viewport.Width / 2;

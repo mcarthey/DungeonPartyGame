@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Suppress duplicate assembly attribute errors across the solution (CS0579) -->
+    <NoWarn>$(NoWarn);CS0579</NoWarn>
+  </PropertyGroup>
+</Project>

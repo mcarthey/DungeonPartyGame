@@ -1,0 +1,1 @@
+Place the font license or a short notice here if you add the bundled TTF (e.g., Noto Sans - Apache 2.0). Do not add the font binary unless you agree to the font's license and include it alongside this file.

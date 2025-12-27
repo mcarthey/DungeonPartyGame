@@ -6,7 +6,9 @@ using DungeonPartyGame.Core.Models;
 using DungeonPartyGame.Core.Services;
 using Microsoft.Extensions.Logging;
 using System.IO;
+#if NET8_0_WINDOWS
 using SpriteFontPlus;
+#endif
 
 namespace DungeonPartyGame.MonoGame.Screens;
 
@@ -122,6 +124,7 @@ public class CombatScreen : Screen
         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
         _whitePixel.SetData(new[] { XnaColor.White });
 
+#if NET8_0_WINDOWS
         // Load fonts - prefer a bundled font in Content/Fonts, otherwise fall back to system arial (avoids content pipeline requirement)
         try
         {
@@ -163,6 +166,9 @@ public class CombatScreen : Screen
         {
             _logger.LogWarning(ex, "Runtime font generation failed; using fallback rendering");
         }
+#else
+        _logger.LogWarning("Runtime font generation (SpriteFontPlus) not available on this target; using fallback rendering");
+#endif
 
         // Initialize combat
         InitializeCombat();

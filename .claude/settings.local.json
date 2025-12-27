@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(dotnet test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(dotnet run)",
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(tasklist)",
+      "Bash(cmd.exe /c \"start bin\\\\Debug\\\\net10.0-windows10.0.19041.0\\\\win-x64\\\\DungeonPartyGame.exe\")"
+    ]
+  }
+}
