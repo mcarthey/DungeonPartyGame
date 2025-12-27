@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using DungeonPartyGame.MonoGame.Screens;
 using DungeonPartyGame.Core.Models;
 using DungeonPartyGame.Core.Services;
@@ -19,7 +20,7 @@ public class DungeonPartyGameMain : Game
     // Make these accessible to screens
     public new GraphicsDevice GraphicsDevice => base.GraphicsDevice;
     public SpriteBatch SpriteBatch => _spriteBatch;
-    public IServiceProvider Services => _serviceProvider;
+    public new IServiceProvider Services => _serviceProvider;
 
     public DungeonPartyGameMain()
     {
@@ -72,34 +73,18 @@ public class DungeonPartyGameMain : Game
         var session = new GameSession();
 
         // Create default party with test characters
-        var party = new Party { Name = "Hero Party" };
+        var party = new Party();
 
-        var fighter = new Character
-        {
-            Name = "Ragnar",
-            Class = "Fighter",
-            Level = 30
-        };
-        fighter.Stats.Strength = 18;
-        fighter.Stats.Dexterity = 12;
-        fighter.Stats.Constitution = 16;
-        fighter.Stats.MaxHealth = 50;
-        fighter.Stats.CurrentHealth = 50;
+        var fighter = new Character("Ragnar", CharacterRole.Fighter, new Stats(18, 12, 16, 50));
+        fighter.Stats.Crit = 0;
+        fighter.Stats.Dodge = 0;
 
-        var rogue = new Character
-        {
-            Name = "Shadow",
-            Class = "Rogue",
-            Level = 28
-        };
-        rogue.Stats.Strength = 10;
-        rogue.Stats.Dexterity = 18;
-        rogue.Stats.Constitution = 12;
-        rogue.Stats.MaxHealth = 40;
-        rogue.Stats.CurrentHealth = 40;
+        var rogue = new Character("Shadow", CharacterRole.Rogue, new Stats(10, 18, 12, 40));
+        rogue.Stats.Crit = 0;
+        rogue.Stats.Dodge = 0;
 
-        party.AddMember(fighter);
-        party.AddMember(rogue);
+        party.Add(fighter);
+        party.Add(rogue);
         session.AddParty(party);
 
         return session;
@@ -136,7 +121,7 @@ public class DungeonPartyGameMain : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        GraphicsDevice.Clear(XnaColor.CornflowerBlue);
 
         _screenManager.Draw(gameTime);
 

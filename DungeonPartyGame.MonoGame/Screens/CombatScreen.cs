@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using DungeonPartyGame.Core.Models;
 using DungeonPartyGame.Core.Services;
 using Microsoft.Extensions.Logging;
@@ -54,7 +55,7 @@ public class CombatScreen : Screen
 
         // Create 1x1 white pixel for drawing
         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
-        _whitePixel.SetData(new[] { Color.White });
+        _whitePixel.SetData(new[] { XnaColor.White });
 
         // Initialize combat
         InitializeCombat();
@@ -64,9 +65,17 @@ public class CombatScreen : Screen
 
     private void InitializeCombat()
     {
-        // Get party members
-        _fighter = _gameSession.Party.FirstOrDefault(c => c.Class == "Fighter");
-        _rogue = _gameSession.Party.FirstOrDefault(c => c.Class == "Rogue");
+        // Get current party
+        var party = _gameSession.CurrentParty;
+        if (party == null)
+        {
+            _logger.LogWarning("No current party found in session");
+            return;
+        }
+
+        // Get party members (use Role)
+        _fighter = party.Members.FirstOrDefault(c => c.Role == DungeonPartyGame.Core.Models.CharacterRole.Fighter);
+        _rogue = party.Members.FirstOrDefault(c => c.Role == DungeonPartyGame.Core.Models.CharacterRole.Rogue);
 
         if (_fighter == null || _rogue == null)
         {
@@ -74,20 +83,16 @@ public class CombatScreen : Screen
             return;
         }
 
-        // Create test enemy
-        _goblin = new Character
-        {
-            Name = "Goblin",
-            Class = "Monster",
-            Level = 5
-        };
-        _goblin.Stats.MaxHealth = 30;
-        _goblin.Stats.CurrentHealth = 30;
-        _goblin.Stats.Strength = 8;
+        // Create test enemy (use Role/Fighter for simple enemy)
+        _goblin = new Character("Goblin", DungeonPartyGame.Core.Models.CharacterRole.Fighter, new Stats(8, 8, 8, 30));
 
-        // Set up combat in CombatEngine
-        var encounterResult = _combatEngine.StartRandomEncounter(_gameSession);
+        // Create enemy party and start session
+        var enemyParty = new Party();
+        enemyParty.Add(_goblin);
+
+        var session = _combatEngine.CreateSession(party, enemyParty);
         _combatActive = true;
+        _currentSession = session;
 
         // Create character sprites
         _heroSprites.Add(new CharacterSprite(
@@ -161,59 +166,52 @@ public class CombatScreen : Screen
         _previousMouseState = mouseState;
     }
 
+    private CombatSession? _currentSession;
+
     private void ExecuteNextTurn()
     {
         _logger.LogInformation("Executing next combat turn");
 
-        var result = _combatEngine.ExecuteRound();
-
-        // Process results and create visual feedback
-        if (result.IsSuccess)
+        if (_currentSession == null)
         {
-            _combatLog = "";
+            _combatLog = "No active combat session.";
+            return;
+        }
 
-            foreach (var action in result.CombatActions)
+        var result = _combatEngine.ExecuteRound(_currentSession);
+
+        // Use summary text for the log
+        _combatLog = result.SummaryText ?? string.Empty;
+
+        // Create damage number visuals from targets
+        foreach (var targetResult in result.Targets)
+        {
+            var defenderSprite = _heroSprites.Concat(_enemySprites)
+                .FirstOrDefault(s => s.Character == targetResult.Target);
+
+            if (defenderSprite != null)
             {
-                _combatLog += $"{action.Attacker?.Name} -> {action.Defender?.Name}: ";
+                _damageNumbers.Add(new DamageNumber(
+                    targetResult.Damage.ToString(),
+                    defenderSprite.Position,
+                    targetResult.IsHealing ? XnaColor.LightGreen : XnaColor.Red));
 
-                if (action.IsCritical)
-                    _combatLog += "CRITICAL! ";
-
-                _combatLog += $"{action.TotalDamage} damage\n";
-
-                // Create damage number visual
-                var defenderSprite = _heroSprites.Concat(_enemySprites)
-                    .FirstOrDefault(s => s.Character == action.Defender);
-
-                if (defenderSprite != null)
-                {
-                    _damageNumbers.Add(new DamageNumber(
-                        action.TotalDamage.ToString(),
-                        defenderSprite.Position,
-                        action.IsCritical ? Color.Orange : Color.Red));
-
-                    // Trigger hit animation
-                    defenderSprite.TriggerHit();
-                }
-            }
-
-            // Check for combat end
-            if (result.IsCombatComplete)
-            {
-                _combatActive = false;
-                if (result.IsPlayerVictory)
-                {
-                    _combatLog += "\n🎉 VICTORY! 🎉";
-                }
-                else
-                {
-                    _combatLog += "\n💀 DEFEAT 💀";
-                }
+                // Trigger hit animation
+                defenderSprite.TriggerHit();
             }
         }
-        else
+
+        // Check for combat end
+        if (result.IsFinalTurn)
         {
-            _combatLog = result.Message ?? "Combat error";
+            _combatActive = false;
+            if (_currentSession.IsComplete && _currentSession.WinningParty != null)
+            {
+                if (_currentSession.WinningParty == _currentSession.PartyA)
+                    _combatLog += "\n🎉 VICTORY! 🎉";
+                else
+                    _combatLog += "\n💀 DEFEAT 💀";
+            }
         }
     }
 
@@ -225,16 +223,16 @@ public class CombatScreen : Screen
 
         // Draw background
         DrawRectangle(new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
-            new Color(40, 35, 30));
+            new XnaColor(40, 35, 30));
 
         // Draw combat arena
         DrawRectangle(new Rectangle(50, 150, GraphicsDevice.Viewport.Width - 100, 400),
-            new Color(60, 55, 50));
+            new XnaColor(60, 55, 50));
 
         // Draw header
         DrawText("⚔️ COMBAT ⚔️",
             new Vector2(GraphicsDevice.Viewport.Width / 2, 50),
-            Color.Gold, 2.0f, true);
+            XnaColor.Gold, 2.0f, true);
 
         // Draw character sprites
         foreach (var sprite in _heroSprites)
@@ -265,10 +263,10 @@ public class CombatScreen : Screen
     private void DrawCombatLog()
     {
         var logRect = new Rectangle(50, 580, GraphicsDevice.Viewport.Width - 100, 100);
-        DrawRectangle(logRect, new Color(20, 20, 30));
-        DrawRectangleBorder(logRect, Color.Gray, 2);
+        DrawRectangle(logRect, new XnaColor(20, 20, 30));
+        DrawRectangleBorder(logRect, XnaColor.Gray, 2);
 
-        DrawText(_combatLog, new Vector2(60, 590), Color.White, 0.9f);
+        DrawText(_combatLog, new Vector2(60, 590), XnaColor.White, 0.9f);
     }
 
     private void DrawButtons()
@@ -283,27 +281,27 @@ public class CombatScreen : Screen
             200, 50);
 
         bool nextTurnHovered = nextTurnButton.Contains(mousePoint);
-        Color nextTurnColor = _combatActive
-            ? (nextTurnHovered ? Color.LightGreen : Color.Green)
-            : Color.Gray;
+        XnaColor nextTurnColor = _combatActive
+            ? (nextTurnHovered ? XnaColor.LightGreen : XnaColor.Green)
+            : XnaColor.Gray;
 
         DrawRectangle(nextTurnButton, nextTurnColor);
-        DrawRectangleBorder(nextTurnButton, Color.White, 2);
+        DrawRectangleBorder(nextTurnButton, XnaColor.White, 2);
         DrawText("Next Turn", new Vector2(nextTurnButton.Center.X, nextTurnButton.Center.Y),
-            Color.White, 1.0f, true);
+            XnaColor.White, 1.0f, true);
 
         // Back button
         var backButton = new Rectangle(50, GraphicsDevice.Viewport.Height - 100, 150, 50);
         bool backHovered = backButton.Contains(mousePoint);
-        Color backColor = backHovered ? Color.DarkRed : Color.DarkSlateGray;
+        XnaColor backColor = backHovered ? XnaColor.DarkRed : XnaColor.DarkSlateGray;
 
         DrawRectangle(backButton, backColor);
-        DrawRectangleBorder(backButton, Color.White, 2);
+        DrawRectangleBorder(backButton, XnaColor.White, 2);
         DrawText("← Back", new Vector2(backButton.Center.X, backButton.Center.Y),
-            Color.White, 1.0f, true);
+            XnaColor.White, 1.0f, true);
     }
 
-    private void DrawRectangle(Rectangle rect, Color color)
+    private void DrawRectangle(Rectangle rect, XnaColor color)
     {
         if (_whitePixel != null)
         {
@@ -311,7 +309,7 @@ public class CombatScreen : Screen
         }
     }
 
-    private void DrawRectangleBorder(Rectangle rect, Color color, int thickness)
+    private void DrawRectangleBorder(Rectangle rect, XnaColor color, int thickness)
     {
         if (_whitePixel == null) return;
 
@@ -321,7 +319,7 @@ public class CombatScreen : Screen
         SpriteBatch.Draw(_whitePixel, new Rectangle(rect.Right - thickness, rect.Y, thickness, rect.Height), color);
     }
 
-    private void DrawText(string text, Vector2 position, Color color, float scale = 1.0f, bool centered = false)
+    private void DrawText(string text, Vector2 position, XnaColor color, float scale = 1.0f, bool centered = false)
     {
         if (_regularFont != null)
         {
@@ -395,7 +393,7 @@ public class CombatScreen : Screen
         public void Draw(SpriteBatch spriteBatch, Texture2D whitePixel)
         {
             Vector2 drawPos = Position + _hitOffset;
-            Color tintColor = _hitFlashTime > 0 ? Color.Red : Color.White;
+            XnaColor tintColor = _hitFlashTime > 0 ? XnaColor.Red : XnaColor.White;
 
             // Draw procedural sprite based on type
             switch (Type)
@@ -416,44 +414,44 @@ public class CombatScreen : Screen
 
             // Draw name (fallback rendering)
             var nameRect = new Rectangle((int)drawPos.X - 40, (int)drawPos.Y - 80, 80, 20);
-            spriteBatch.Draw(whitePixel, nameRect, Color.Black * 0.7f);
+            spriteBatch.Draw(whitePixel, nameRect, XnaColor.Black * 0.7f);
         }
 
-        private void DrawFighter(SpriteBatch sb, Texture2D pixel, Vector2 pos, Color tint)
+        private void DrawFighter(SpriteBatch sb, Texture2D pixel, Vector2 pos, XnaColor tint)
         {
             // Body
             sb.Draw(pixel, new Rectangle((int)pos.X - 20, (int)pos.Y - 30, 40, 60),
-                Color.DarkBlue * tint);
+                new XnaColor(XnaColor.DarkBlue.ToVector4() * tint.ToVector4()));
             // Shield
             sb.Draw(pixel, new Rectangle((int)pos.X - 30, (int)pos.Y - 20, 15, 40),
-                Color.Silver * tint);
+                new XnaColor(XnaColor.Silver.ToVector4() * tint.ToVector4()));
             // Sword
             sb.Draw(pixel, new Rectangle((int)pos.X + 20, (int)pos.Y - 30, 5, 50),
-                Color.Gray * tint);
+                new XnaColor(XnaColor.Gray.ToVector4() * tint.ToVector4()));
         }
 
-        private void DrawRogue(SpriteBatch sb, Texture2D pixel, Vector2 pos, Color tint)
+        private void DrawRogue(SpriteBatch sb, Texture2D pixel, Vector2 pos, XnaColor tint)
         {
             // Body
             sb.Draw(pixel, new Rectangle((int)pos.X - 15, (int)pos.Y - 25, 30, 50),
-                Color.DarkGreen * tint);
+                new XnaColor(XnaColor.DarkGreen.ToVector4() * tint.ToVector4()));
             // Daggers
             sb.Draw(pixel, new Rectangle((int)pos.X - 25, (int)pos.Y - 10, 3, 20),
-                Color.Silver * tint);
+                new XnaColor(XnaColor.Silver.ToVector4() * tint.ToVector4()));
             sb.Draw(pixel, new Rectangle((int)pos.X + 22, (int)pos.Y - 10, 3, 20),
-                Color.Silver * tint);
+                new XnaColor(XnaColor.Silver.ToVector4() * tint.ToVector4()));
         }
 
-        private void DrawGoblin(SpriteBatch sb, Texture2D pixel, Vector2 pos, Color tint)
+        private void DrawGoblin(SpriteBatch sb, Texture2D pixel, Vector2 pos, XnaColor tint)
         {
             // Body
             sb.Draw(pixel, new Rectangle((int)pos.X - 18, (int)pos.Y - 20, 36, 40),
-                Color.DarkOliveGreen * tint);
+                new XnaColor(XnaColor.DarkOliveGreen.ToVector4() * tint.ToVector4()));
             // Ears
             sb.Draw(pixel, new Rectangle((int)pos.X - 25, (int)pos.Y - 25, 8, 15),
-                Color.DarkGreen * tint);
+                new XnaColor(XnaColor.DarkGreen.ToVector4() * tint.ToVector4()));
             sb.Draw(pixel, new Rectangle((int)pos.X + 17, (int)pos.Y - 25, 8, 15),
-                Color.DarkGreen * tint);
+                new XnaColor(XnaColor.DarkGreen.ToVector4() * tint.ToVector4()));
         }
 
         private void DrawHealthBar(SpriteBatch sb, Texture2D pixel, Vector2 pos)
@@ -464,19 +462,19 @@ public class CombatScreen : Screen
 
             // Background
             sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, barWidth, barHeight),
-                Color.DarkRed);
+                XnaColor.DarkRed);
 
             // Health
             float healthPercent = (float)Character.Stats.CurrentHealth / Character.Stats.MaxHealth;
             int healthWidth = (int)(barWidth * healthPercent);
             sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, healthWidth, barHeight),
-                Color.LimeGreen);
+                XnaColor.LimeGreen);
 
             // Border
-            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, barWidth, 1), Color.White);
-            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y + barHeight, barWidth, 1), Color.White);
-            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, 1, barHeight), Color.White);
-            sb.Draw(pixel, new Rectangle((int)barPos.X + barWidth, (int)barPos.Y, 1, barHeight), Color.White);
+            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, barWidth, 1), XnaColor.White);
+            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y + barHeight, barWidth, 1), XnaColor.White);
+            sb.Draw(pixel, new Rectangle((int)barPos.X, (int)barPos.Y, 1, barHeight), XnaColor.White);
+            sb.Draw(pixel, new Rectangle((int)barPos.X + barWidth, (int)barPos.Y, 1, barHeight), XnaColor.White);
         }
     }
 
@@ -484,10 +482,10 @@ public class CombatScreen : Screen
     {
         public string Text { get; }
         public Vector2 Position { get; private set; }
-        public Color Color { get; }
+        public XnaColor Color { get; }
         public float Lifetime { get; private set; }
 
-        public DamageNumber(string text, Vector2 position, Color color)
+        public DamageNumber(string text, Vector2 position, XnaColor color)
         {
             Text = text;
             Position = position + new Vector2(0, -30);

@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using DungeonPartyGame.Core.Models;
 using DungeonPartyGame.Core.Services;
 using Microsoft.Extensions.Logging;
@@ -42,7 +43,7 @@ public class HubScreen : Screen
 
         // Create a 1x1 white pixel texture for drawing rectangles
         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
-        _whitePixel.SetData(new[] { Color.White });
+        _whitePixel.SetData(new[] { XnaColor.White });
 
         // Load fonts - using built-in MonoGame font for now
         // In a real game, you'd add custom fonts to Content folder
@@ -67,31 +68,31 @@ public class HubScreen : Screen
         _buttons.Add(new Button(
             new Rectangle(centerX - buttonWidth / 2, startY, buttonWidth, buttonHeight),
             "⚔️ COMBAT",
-            Color.DarkRed,
+            XnaColor.DarkRed,
             OnCombatClicked));
 
         _buttons.Add(new Button(
             new Rectangle(centerX - buttonWidth / 2, startY + (buttonHeight + spacing), buttonWidth, buttonHeight),
             "👥 PARTY",
-            Color.DarkBlue,
+            XnaColor.DarkBlue,
             OnPartyClicked));
 
         _buttons.Add(new Button(
             new Rectangle(centerX - buttonWidth / 2, startY + 2 * (buttonHeight + spacing), buttonWidth, buttonHeight),
             "🎯 SKILLS",
-            Color.DarkGreen,
+            XnaColor.DarkGreen,
             OnSkillsClicked));
 
         _buttons.Add(new Button(
             new Rectangle(centerX - buttonWidth / 2, startY + 3 * (buttonHeight + spacing), buttonWidth, buttonHeight),
             "⚔️ GEAR",
-            Color.DarkOrange,
+            XnaColor.DarkOrange,
             OnGearClicked));
 
         _buttons.Add(new Button(
             new Rectangle(centerX - buttonWidth / 2, startY + 4 * (buttonHeight + spacing), buttonWidth, buttonHeight),
             "🏪 STORE",
-            Color.Purple,
+            XnaColor.Purple,
             OnStoreClicked));
 
         _logger.LogInformation("HubScreen loaded successfully");
@@ -131,15 +132,15 @@ public class HubScreen : Screen
 
         // Draw background
         DrawRectangle(new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
-            new Color(30, 30, 46));
+            new XnaColor(30, 30, 46));
 
         // Draw header
         DrawRectangle(new Rectangle(0, 0, GraphicsDevice.Viewport.Width, 150),
-            new Color(44, 44, 62));
+            new XnaColor(44, 44, 62));
 
         // Draw title
         DrawText("🏰 DUNGEON PARTY HUB 🏰", new Vector2(GraphicsDevice.Viewport.Width / 2, 40),
-            Color.Gold, 2.0f, true);
+            XnaColor.Gold, 2.0f, true);
 
         // Draw currency display
         int currencyY = 100;
@@ -147,9 +148,9 @@ public class HubScreen : Screen
         string gemsText = $"💎 Gems: {_currencyService.GetFormattedBalance(CurrencyType.Gems)}";
 
         DrawText(goldText, new Vector2(GraphicsDevice.Viewport.Width / 2 - 150, currencyY),
-            Color.Gold, 1.0f);
+            XnaColor.Gold, 1.0f);
         DrawText(gemsText, new Vector2(GraphicsDevice.Viewport.Width / 2 + 150, currencyY),
-            Color.Cyan, 1.0f);
+            XnaColor.Cyan, 1.0f);
 
         // Draw buttons
         var mouseState = Mouse.GetState();
@@ -158,29 +159,29 @@ public class HubScreen : Screen
         foreach (var button in _buttons)
         {
             bool isHovered = button.Bounds.Contains(mousePoint);
-            Color buttonColor = isHovered ? Color.Lerp(button.Color, Color.White, 0.3f) : button.Color;
+            XnaColor buttonColor = isHovered ? XnaColor.Lerp(button.Color, XnaColor.White, 0.3f) : button.Color;
 
             // Draw button background
             DrawRectangle(button.Bounds, buttonColor);
 
             // Draw button border
-            DrawRectangleBorder(button.Bounds, Color.White, 2);
+            DrawRectangleBorder(button.Bounds, XnaColor.White, 2);
 
             // Draw button text
             DrawText(button.Text,
                 new Vector2(button.Bounds.Center.X, button.Bounds.Center.Y),
-                Color.White, 1.2f, true);
+                XnaColor.White, 1.2f, true);
         }
 
         // Draw footer instructions
         DrawText("ESC = Exit | Click buttons to navigate",
             new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 30),
-            Color.Gray, 0.8f, true);
+            XnaColor.Gray, 0.8f, true);
 
         SpriteBatch.End();
     }
 
-    private void DrawRectangle(Rectangle rect, Color color)
+    private void DrawRectangle(Rectangle rect, XnaColor color)
     {
         if (_whitePixel != null)
         {
@@ -188,7 +189,7 @@ public class HubScreen : Screen
         }
     }
 
-    private void DrawRectangleBorder(Rectangle rect, Color color, int thickness)
+    private void DrawRectangleBorder(Rectangle rect, XnaColor color, int thickness)
     {
         if (_whitePixel == null) return;
 
@@ -202,7 +203,7 @@ public class HubScreen : Screen
         SpriteBatch.Draw(_whitePixel, new Rectangle(rect.Right - thickness, rect.Y, thickness, rect.Height), color);
     }
 
-    private void DrawText(string text, Vector2 position, Color color, float scale = 1.0f, bool centered = false)
+    private void DrawText(string text, Vector2 position, XnaColor color, float scale = 1.0f, bool centered = false)
     {
         if (_regularFont != null)
         {
@@ -275,10 +276,10 @@ public class HubScreen : Screen
     {
         public Rectangle Bounds { get; }
         public string Text { get; }
-        public Color Color { get; }
+        public XnaColor Color { get; }
         public Action? OnClick { get; }
 
-        public Button(Rectangle bounds, string text, Color color, Action? onClick = null)
+        public Button(Rectangle bounds, string text, XnaColor color, Action? onClick = null)
         {
             Bounds = bounds;
             Text = text;

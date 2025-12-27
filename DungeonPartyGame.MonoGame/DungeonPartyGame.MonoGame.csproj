@@ -2,23 +2,59 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Disable SDK implicit Compile items so we can explicitly exclude generated AssemblyInfo files from compilation -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <!-- Suppress duplicate assembly attribute errors (CS0579) that can come from generated AssemblyInfo in some SDK/tooling combos -->
+    <NoWarn>$(NoWarn);CS0579;0579</NoWarn>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.2.1105" />
+
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.2.1105" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.2.1105" />
+    <!-- When building with the real MonoGame package, exclude local stub implementation -->
+    <Compile Remove="Compat\MonogameStubs.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Prevent generated AssemblyInfo files in obj from causing duplicate attribute errors -->
+    <Compile Remove="$(IntermediateOutputPath)**\*AssemblyInfo.cs" />
+    <Compile Remove="$(IntermediateOutputPath)$(MSBuildProjectName).AssemblyInfo.cs" />
+    <Compile Remove="**\*AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\DungeonPartyGame.Core\DungeonPartyGame.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Re-enable explicit compile inclusion but exclude generated AssemblyInfo files and build outputs -->
+  <ItemGroup>
+    <Compile Include="**\*.cs" Exclude="$(IntermediateOutputPath)**\*AssemblyInfo.cs;**\*AssemblyInfo.cs;bin\**\*;obj\**\*" />
+  </ItemGroup>
+
+  <!-- Ensure the local MonoGame stub is excluded when the real MonoGame package is referenced -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <Compile Remove="Compat\MonogameStubs.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,5 +62,26 @@
     <Folder Include="Screens\" />
     <Folder Include="Sprites\" />
   </ItemGroup>
+
+
+  <!-- Remove any AssemblyInfo files generated in obj before compile to avoid duplicate attribute errors -->
+  <Target Name="RemoveGeneratedAssemblyInfo" BeforeTargets="PrepareForBuild;CoreCompile">
+    <Delete Files="$(IntermediateOutputPath)$(MSBuildProjectName).AssemblyInfo.cs;$(IntermediateOutputPath)**\*AssemblyInfo.cs" ContinueOnError="true" />
+  </Target>
+
+  <!-- Some SDKs generate AssemblyInfo AFTER our initial delete; ensure generated files are removed from Compile items after generation -->
+  <Target Name="ExcludeGeneratedAssemblyInfo" AfterTargets="GenerateAssemblyInfo;WriteCodeFragmentToFile">
+    <ItemGroup>
+      <Compile Remove="$(IntermediateOutputPath)$(MSBuildProjectName).AssemblyInfo.cs" />
+      <Compile Remove="$(IntermediateOutputPath)**\*AssemblyInfo.cs" />
+    </ItemGroup>
+    <!-- Also delete any generated AssemblyInfo files after they're written to prevent duplicate attributes being compiled -->
+    <Delete Files="$(IntermediateOutputPath)$(MSBuildProjectName).AssemblyInfo.cs;$(IntermediateOutputPath)**\*AssemblyInfo.cs" ContinueOnError="true" />
+  </Target>
+
+  <!-- Delete any generated AssemblyInfo files immediately before the C# compiler runs -->
+  <Target Name="DeleteAssemblyInfoJustBeforeCsc" BeforeTargets="Csc">
+    <Delete Files="$(IntermediateOutputPath)$(MSBuildProjectName).AssemblyInfo.cs;$(IntermediateOutputPath)**\*AssemblyInfo.cs" ContinueOnError="true" />
+  </Target>
 
 </Project>

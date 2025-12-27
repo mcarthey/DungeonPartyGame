@@ -14,13 +14,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup .NET 10
+    - name: Setup .NET 8
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '10.0.x'
-
-    - name: Install MAUI workloads
-      run: dotnet workload install maui --skip-manifest-update
+        dotnet-version: '8.0.x'
 
     - name: Restore dependencies
       run: dotnet restore DungeonPartyGame.sln
@@ -28,14 +25,11 @@ jobs:
     - name: Build Core project
       run: dotnet build DungeonPartyGame.Core/DungeonPartyGame.Core.csproj --no-restore --configuration Release
 
-    - name: Build UI project
-      run: dotnet build DungeonPartyGame.UI/DungeonPartyGame.UI.csproj --no-restore --configuration Release
+    - name: Build MonoGame project
+      run: dotnet build DungeonPartyGame.MonoGame/DungeonPartyGame.MonoGame.csproj --no-restore --configuration Release
 
     - name: Build Tests project
       run: dotnet build DungeonPartyGame.Tests/DungeonPartyGame.Tests.csproj --no-restore --configuration Release
-
-    - name: Build Main project
-      run: dotnet build DungeonPartyGame.csproj --no-restore --configuration Release --runtime win-x64
 
     - name: Run tests
       run: dotnet test DungeonPartyGame.Tests/DungeonPartyGame.Tests.csproj --no-build --verbosity normal --configuration Release --logger "trx;LogFileName=test-results.trx"
