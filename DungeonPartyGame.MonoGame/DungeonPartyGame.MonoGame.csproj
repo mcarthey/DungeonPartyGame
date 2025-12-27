@@ -63,6 +63,10 @@
     <Folder Include="Sprites\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <MonoGameContentReference Include="Content\Fonts\RegularFont.spritefont" />
+  </ItemGroup>
+
 
   <!-- Remove any AssemblyInfo files generated in obj before compile to avoid duplicate attribute errors -->
   <Target Name="RemoveGeneratedAssemblyInfo" BeforeTargets="PrepareForBuild;CoreCompile">

@@ -49,9 +49,9 @@ public class HubScreen : Screen
         // In a real game, you'd add custom fonts to Content folder
         try
         {
-            // Try to load custom font if available, otherwise we'll use fallback rendering
-            // _titleFont = Game.Content.Load<SpriteFont>("Fonts/TitleFont");
-            // _regularFont = Game.Content.Load<SpriteFont>("Fonts/RegularFont");
+            // Try to load fonts if available (RegularFont used for both title and body)
+            _titleFont = Game.Content.Load<SpriteFont>("Fonts/RegularFont");
+            _regularFont = Game.Content.Load<SpriteFont>("Fonts/RegularFont");
         }
         catch
         {
@@ -205,10 +205,25 @@ public class HubScreen : Screen
 
     private void DrawText(string text, Vector2 position, XnaColor color, float scale = 1.0f, bool centered = false)
     {
-        if (_regularFont != null)
+        // Prefer a title font for large text, otherwise use the regular font if available
+        SpriteFont? fontToUse = null;
+        if (scale >= 2.0f && _titleFont != null)
         {
-            Vector2 origin = centered ? _regularFont.MeasureString(text) / 2 : Vector2.Zero;
-            SpriteBatch.DrawString(_regularFont, text, position, color, 0f, origin, scale, SpriteEffects.None, 0);
+            fontToUse = _titleFont;
+        }
+        else if (_regularFont != null)
+        {
+            fontToUse = _regularFont;
+        }
+        else if (_titleFont != null)
+        {
+            fontToUse = _titleFont;
+        }
+
+        if (fontToUse != null)
+        {
+            Vector2 origin = centered ? fontToUse.MeasureString(text) / 2 : Vector2.Zero;
+            SpriteBatch.DrawString(fontToUse, text, position, color, 0f, origin, scale, SpriteEffects.None, 0);
         }
         else
         {
